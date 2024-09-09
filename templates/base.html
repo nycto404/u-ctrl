@@ -19,6 +19,9 @@
     </head>
     <body>
         <nav>
+            <div class="title">
+                <h1>u-webui</h1>
+            </div>
             <div class="links">
                 <li><a href="/"><i class="fa-solid fa-home"></i> Home</a></li>
                 <li><a href="/about"><i class="fa-solid fa-info"></i> About</a></li>
@@ -26,13 +29,15 @@
             <div class="theme">
                 <button class="btn btn-dark" id="toggle-theme-button"><i class="fa-solid fa-sun" id="toggle-theme-button-icon"></i></button>
             </div>
-        </nav>
+        </nav><br>
         {% block content %}
         <!-- Content from other .html file(s) -->
         {% endblock %}
         <footer>
             <div class="footer">
-                <h1>I am the footer</h1>
+                <div class="socials">
+                    <li><a href="https://github.com/pfra17"><i class="fa-brands fa-github fa-2xl"></i></a></li>
+                </div>
             </div>
         </footer>
         <!-- Theme toggle app -->

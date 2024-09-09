@@ -32,6 +32,11 @@ nav {
     background-color: #ff6e59;
 }
 
+.title {
+    position: absolute;
+    left: 10px;
+}
+
 footer {
     display: flex;
     justify-content: center;
@@ -63,7 +68,8 @@ a {
     width: 90%;
     height: 100%;
     display: flex;
-    justify-content: space-around;
+    justify-content: start;
+    margin: auto;
 }
 
 .about {
