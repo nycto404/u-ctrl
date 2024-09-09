@@ -1,0 +1,62 @@
+:root {
+    --background-color: white;
+    --color: black;
+    --primary-color: #6f65ff;
+    --secondary-color: #65ffa5;
+}
+
+[data-theme="dark"] {
+    --background-color: rgb(17, 16, 16);
+    --color: white;
+    --primary-color: #268600;
+    --secondary-color: #46067a;
+}
+
+* {
+    margin: 0;
+    list-style: none;
+}
+
+body {
+    background-color: var(--background-color);
+    color: var(--color);
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+nav {
+    height: 50px;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    background-color: #ff6e59;
+}
+
+.links {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    height: auto;
+    width: 50%;
+
+}
+
+.theme {
+    position: absolute;
+    right: 10px;
+}
+
+a {
+    text-decoration: none;
+    color: var(--color);
+}
+
+.main-container {
+    width: 90%;
+    height: 100%;
+    display: flex;
+    justify-content: space-around;
+}
+
+.title {
+    text-align: center;
+}
