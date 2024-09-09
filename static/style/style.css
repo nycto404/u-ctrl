@@ -21,6 +21,7 @@ body {
     background-color: var(--background-color);
     color: var(--color);
     transition: background-color 0.3s ease, color 0.3s ease;
+    height: 100vh;
 }
 
 nav {
@@ -28,6 +29,14 @@ nav {
     display: flex;
     justify-content: space-around;
     align-items: center;
+    background-color: #ff6e59;
+}
+
+footer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 250px;
     background-color: #ff6e59;
 }
 
@@ -57,6 +66,11 @@ a {
     justify-content: space-around;
 }
 
+.about {
+    height: 100%;
+}
+
 .title {
     text-align: center;
 }
+
