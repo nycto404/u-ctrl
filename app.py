@@ -2,6 +2,9 @@ from flask import Flask, render_template, jsonify
 from flask_socketio import SocketIO, send, emit
 import lib.ubxlib as ubxlib
 
+stream = None # Initialize data stream variable
+rx_connected = False
+
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
 socketio = SocketIO(app)
@@ -21,8 +24,22 @@ def list_serial_ports():
 
 @socketio.on('auto_connect_receiver')
 def auto_connect_receiver():
+    global stream
     connection_info = ubxlib.auto_connect_receiver(socketio)
     print(connection_info)
+    stream = connection_info[2]
+
+@socketio.on('is_rx_connected')
+def is_rx_connected():
+    global stream, rx_connected
+    if stream:
+        rx_connected = True
+    else:
+        rx_connected = False
+    emit('rx_connection_status', rx_connected)
+
+
+
 
 #Log rx
 

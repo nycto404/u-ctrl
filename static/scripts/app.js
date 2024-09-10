@@ -44,13 +44,40 @@ socket.on('connection_log', function(data) {
 
 socket.on('rx_connected', function(data) {
     console.log('Rx connected at: ', data);
-    
-
+    $("#connection-status").text("Connected");
+    $(".connection-status").css({
+        "background-color": "green"
+    })
 })
 
 let clearLog = () => {
     logContainer.textContent = ""; 
 }
+
+
+
+
+let isRxConnected = () => {
+    console.log('isRxConnected');
+    socket.emit('is_rx_connected');
+}
+
+socket.on('rx_connection_status', function(data) {
+    console.log('rx_connection_status: ', data);
+    if (data == true) {
+        $(".connection-status").css({
+            "background-color": "green"
+        });
+        $("#connection-status").text("Connected");
+    } else {
+        $(".connection-status").css({
+            "background-color": "red"
+        });
+        $("#connection-status").text("Disconnected");
+    }
+})
+
+isRxConnected();
 
 listSerialPortsButton.addEventListener("click", listSerialPorts);
 autoConnectButton.addEventListener("click", autoConnect);

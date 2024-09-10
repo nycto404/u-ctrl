@@ -85,6 +85,19 @@ a {
 
 .controls {
     width: 100%;
+    display: grid;
+    grid-template-columns: auto 150px;
+    
+}
+
+.connection-status {
+    height: auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #dc3545;
+    border-radius: 10px;
+    cursor: default;
 }
 
 .log-container {
