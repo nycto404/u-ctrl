@@ -1,18 +1,31 @@
 {% extends 'base.html' %}
 
 {% block content %}
+
 <div class="main-container">
-    <div class="serial-ports">
-        <div class="list-serial-ports-button">
-            <button class="btn btn-primary" id="list-serial-ports">List Serial Ports</button>
-        </div>
-        <div class="available-serial-ports">
-            
-        </div>
+
+
+    <div class="controls">
+        <button class="btn btn-primary" id="list-serial-ports-button">List Serial Ports</button>
+        <button class="btn btn-primary" id="autoconnect-button">Autoconnect</button>
+        <button class="btn btn-danger" id="clear-log-button">Clear Log</button>
+        <button class="btn btn-primary" id="test-button">Test Button</button>
+        <p class="connection-status">Disconnected</p>
     </div>
+    <hr>
+
+    <div class="connection-details">
+        <p>Receiver connected or disconnected??</p>
+    </div>
+    <hr>
+
+
+    <div class="log-container" id="log-container">
+    </div>
+    <hr>
+
 </div>
 
 
 <script src="/static/scripts/app.js"></script>
-
 {% endblock %}

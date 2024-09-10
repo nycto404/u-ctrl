@@ -1,5 +1,6 @@
-from flask import Flask, render_template
-from flask_socketio import SocketIO
+from flask import Flask, render_template, jsonify
+from flask_socketio import SocketIO, send, emit
+import lib.ubxlib as ubxlib
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
@@ -13,7 +14,28 @@ def index():
 def about():
     return render_template("about.html")
 
+@socketio.on('list_serial_ports')
+def list_serial_ports():
+    ports = ubxlib.list_available_serial_ports()
+    emit('available_serial_ports', ports[1])
+
+@socketio.on('auto_connect_receiver')
+def auto_connect_receiver():
+    connection_info = ubxlib.auto_connect_receiver(socketio)
+    print(connection_info)
+
+#Log rx
 
 
+
+
+
+
+@socketio.on('message')
+def handle_message(data):
+    print('received message: ' + data['data'][0])
+    emit('message_response', {'data': 'Message was received by the server!'})
+
+    
 if __name__ == '__main__':
     socketio.run(app, debug=True)
