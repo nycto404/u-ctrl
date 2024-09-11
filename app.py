@@ -28,6 +28,7 @@ def auto_connect_receiver():
     connection_info = ubxlib.auto_connect_receiver(socketio)
     print(connection_info)
     stream = connection_info[2]
+    is_rx_connected()
 
 @socketio.on('connect_receiver')
 def connect(data):
@@ -46,7 +47,11 @@ def is_rx_connected():
         rx_connected = True
     else:
         rx_connected = False
-    emit('rx_connection_status', rx_connected)
+    emit('rx_connection_status', {
+                                'rx_connected': rx_connected,
+                                'stream': str(stream)
+                                })
+                                
 
 @socketio.on('disconnect_rx')
 def disconnect_rx():

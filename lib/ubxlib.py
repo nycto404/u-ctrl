@@ -108,22 +108,26 @@ def auto_connect_receiver(socketio=None):
 
 def connect_receiver(serial_port, baudrate, socketio=None):
     try:
-        stream = Serial(serial_port, timeout=1, baudrate=baudrate)
-        stream.write(MON_VER_MSG) # Sending the MON-VER msg to the stream
-        time.sleep(0.1)
-        response = stream.read(2048) # Read 2048 bytes from the stream
-        print(str(response))
-        if "ROM BASE" in str(response) or "$G" in str(response):
-            serial_port = serial_port
-            print("Success! Receiver available!")
-            print(f"Serial port: {serial_port}, Baudrate: {baudrate}, Stream: {stream}")
-            if socketio:
-                socketio.emit("rx_connected", {
-                    'serial_port': serial_port,
-                    'baudrate': baudrate,
-                    'stream': str(stream),
-                    })
-            return [serial_port, baudrate, stream]
+        for attempt in range (3): # Try several times
+            print(f'Connection attempt no.: {attempt}')
+            stream = Serial(serial_port, timeout=1, baudrate=baudrate)
+            stream.write(MON_VER_MSG) # Sending the MON-VER msg to the stream
+            time.sleep(0.1)
+            response = stream.read(4096) # Read 2048 bytes from the stream
+            print(str(response))
+            if "ROM BASE" in str(response) or "$G" in str(response):
+                serial_port = serial_port
+                print("Success! Receiver available!")
+                print(f"Serial port: {serial_port}, Baudrate: {baudrate}, Stream: {stream}")
+                if socketio:
+                    socketio.emit("rx_connected", {
+                        'serial_port': serial_port,
+                        'baudrate': baudrate,
+                        'stream': str(stream),
+                        })
+                return [serial_port, baudrate, stream]
+            else:
+                stream.close()
 
     except Exception as e:
         print(f"Error: {e}")

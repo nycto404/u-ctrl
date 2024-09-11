@@ -60,12 +60,16 @@ let connectReceiver = () => {
     console.log('connectReceiver');
     let serialPort = serialPortSelect.value;
     let baudrate = baudrateSelect.value;
-    socket.emit('connect_receiver', {data: 
-        {
-            'serial_ports': serialPort,
-            'baudrate': baudrate
-        }
-    });
+    if ((serialPort != 'Serial Port') && (baudrate != 'Baudrate')) {
+        socket.emit('connect_receiver', {data: 
+            {
+                'serial_ports': serialPort,
+                'baudrate': baudrate
+            }
+        });
+    } else {
+        alert("Please select Serial Port & Baudrate!");
+    }
 }
 
 socket.on('rx_connected', function(data) {
@@ -96,16 +100,23 @@ let isRxConnected = () => {
 
 socket.on('rx_connection_status', function(data) {
     console.log('rx_connection_status: ', data);
-    if (data == true) {
+    console.log('rx_connected: ', data['rx_connected']);
+    if (data['rx_connected'] == true) {
         $(".connection-status").css({
             "background-color": "#1adb61"
         });
         $("#connection-status").text("Connected");
+        autoConnectButton.disabled = true;
+        connectButton.disabled = true;
+        disconnectButton.disabled = false;
     } else {
         $(".connection-status").css({
             "background-color": "#e3103a"
         });
         $("#connection-status").text("Disconnected");
+        autoConnectButton.disabled = false;
+        connectButton.disabled = false;
+        disconnectButton.disabled = true;
     }
 })
 
