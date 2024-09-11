@@ -31,7 +31,7 @@ nav {
     display: flex;
     justify-content: space-around;
     align-items: center;
-    background-color: #ff6e59;
+    background-color: #ff6f59;
 }
 
 .title {
@@ -86,8 +86,20 @@ a {
 .controls {
     width: 100%;
     display: grid;
-    grid-template-columns: auto 150px;
-    
+    grid-template-columns: auto  auto 150px;
+    column-gap: 20px;
+}
+
+.manual-connect {
+    display: grid;
+    grid-template-columns: auto auto auto;
+    grid-template-rows: auto;
+    column-gap: 5px;
+}
+
+.form-select {
+    background-color: var(--background-color);
+    color: var(--color);
 }
 
 .connection-status {

@@ -29,6 +29,16 @@ def auto_connect_receiver():
     print(connection_info)
     stream = connection_info[2]
 
+@socketio.on('connect_receiver')
+def connect(data):
+    global stream
+    serial_port = data['data']['serial_ports']
+    baudrate = data['data']['baudrate']
+    connection_info = ubxlib.connect_receiver(serial_port, baudrate, socketio)
+    print(connection_info)
+    stream = connection_info[2]
+    is_rx_connected()
+
 @socketio.on('is_rx_connected')
 def is_rx_connected():
     global stream, rx_connected
@@ -42,8 +52,12 @@ def is_rx_connected():
 def disconnect_rx():
     print('disconnect_rx')
     global stream
-    stream.close()
-    stream = None
+    print(stream)
+    if stream:
+        print('Closing stream...')
+        stream.close()
+        stream = None
+        
     is_rx_connected()
 
 

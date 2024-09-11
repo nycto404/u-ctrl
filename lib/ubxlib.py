@@ -54,8 +54,7 @@ def auto_connect_receiver(socketio=None):
                     #logging.info("Attempt: " + str(attempt+1))
                     print("Attempt: " + str(attempt+1))
                     try:
-                        if socketio:
-                            print(socketio)
+                        if socketio: # Send logs to the client if there is an open socket
                             socketio.emit("connection_log", {
                                 'serial_port': port.device,
                                 'baudrate': baudrate,
@@ -74,11 +73,12 @@ def auto_connect_receiver(socketio=None):
                             #logging.info("UBX message received!")
                             print("Success! Receiver available!")
                             print(f"Serial port: {serial_port}, Baudrate: {baudrate}, Stream: {stream}")
-                            socketio.emit("rx_connected", {
-                                'serial_port': serial_port,
-                                'baudrate': baudrate,
-                                'stream': str(stream),
-                                })
+                            if socketio: # Tell the client the great news that there is a connection!!
+                                socketio.emit("rx_connected", {
+                                    'serial_port': serial_port,
+                                    'baudrate': baudrate,
+                                    'stream': str(stream),
+                                    })
                             return [serial_port, baudrate, stream]
                         else:
                             #logging.warning("No UBX message received... Closing serial connection...")
@@ -106,6 +106,31 @@ def auto_connect_receiver(socketio=None):
         print(tb)
         print(f"Error: {e}")
 
+def connect_receiver(serial_port, baudrate, socketio=None):
+    try:
+        stream = Serial(serial_port, timeout=1, baudrate=baudrate)
+        stream.write(MON_VER_MSG) # Sending the MON-VER msg to the stream
+        time.sleep(0.1)
+        response = stream.read(2048) # Read 2048 bytes from the stream
+        print(str(response))
+        if "ROM BASE" in str(response) or "$G" in str(response):
+            serial_port = serial_port
+            print("Success! Receiver available!")
+            print(f"Serial port: {serial_port}, Baudrate: {baudrate}, Stream: {stream}")
+            if socketio:
+                socketio.emit("rx_connected", {
+                    'serial_port': serial_port,
+                    'baudrate': baudrate,
+                    'stream': str(stream),
+                    })
+            return [serial_port, baudrate, stream]
+
+    except Exception as e:
+        print(f"Error: {e}")
+        if "Access is denied" in str(e) or "semaphore timeout" in str(e):
+            return
+        
+        
 def log_receiver(socketio=None):
     '''Get position and fixtype from NAV-PVT msg'''
     connection_info = auto_connect_receiver()
