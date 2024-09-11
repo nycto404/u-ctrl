@@ -3,7 +3,7 @@
     --color: black;
     --primary-color: #6f65ff6b;
     --secondary-color: #65ffa58c;
-    --log-container-color: #9494948c;
+    --log-container-color: #dadada44;
 }
 
 [data-theme="dark"] {
@@ -11,7 +11,7 @@
     --color: white;
     --primary-color: #00868683;
     --secondary-color: #46067a;
-    --log-container-color: #4444444b;
+    --log-container-color: #27272742;
 }
 
 * {

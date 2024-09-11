@@ -2,6 +2,7 @@ console.log('app.js');
 
 const listSerialPortsButton = document.getElementById('list-serial-ports-button');
 const autoConnectButton = document.getElementById('autoconnect-button');
+const disconnectButton = document.getElementById('disconnect-button');
 const clearLogButton = document.getElementById('clear-log-button');
 const testButton = document.getElementById('test-button');
 const logContainer = document.getElementById('log-container');
@@ -46,9 +47,15 @@ socket.on('rx_connected', function(data) {
     console.log('Rx connected at: ', data);
     $("#connection-status").text("Connected");
     $(".connection-status").css({
-        "background-color": "green"
+        "background-color": "#1adb61"
     })
 })
+
+let disconnectRx = () => {
+    console.log("disconnectRx");
+    socket.emit('disconnect_rx');
+}
+
 
 let clearLog = () => {
     logContainer.textContent = ""; 
@@ -66,12 +73,12 @@ socket.on('rx_connection_status', function(data) {
     console.log('rx_connection_status: ', data);
     if (data == true) {
         $(".connection-status").css({
-            "background-color": "green"
+            "background-color": "#1adb61"
         });
         $("#connection-status").text("Connected");
     } else {
         $(".connection-status").css({
-            "background-color": "red"
+            "background-color": "#e3103a"
         });
         $("#connection-status").text("Disconnected");
     }
@@ -81,5 +88,6 @@ isRxConnected();
 
 listSerialPortsButton.addEventListener("click", listSerialPorts);
 autoConnectButton.addEventListener("click", autoConnect);
+disconnectButton.addEventListener("click", disconnectRx);
 clearLogButton.addEventListener("click", clearLog);
 testButton.addEventListener("click", sendMessage);

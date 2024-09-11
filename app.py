@@ -38,7 +38,13 @@ def is_rx_connected():
         rx_connected = False
     emit('rx_connection_status', rx_connected)
 
-
+@socketio.on('disconnect_rx')
+def disconnect_rx():
+    print('disconnect_rx')
+    global stream
+    stream.close()
+    stream = None
+    is_rx_connected()
 
 
 #Log rx

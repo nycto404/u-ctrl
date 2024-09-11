@@ -16,7 +16,6 @@ python-engineio==4.9.1
 python-socketio==5.11.4
 pyubx2==1.2.45
 PyYAML==6.0.2
-serial==0.0.97
 simple-websocket==1.0.0
 Werkzeug==3.0.4
 wsproto==1.2.0
