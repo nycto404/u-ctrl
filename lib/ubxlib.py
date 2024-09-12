@@ -187,7 +187,7 @@ def get_nav_pvt(stream):
 def poll_ubx_msg(msg_class, msg_id):
     # Construct the UBX message
     msg = UBXMessage(msg_class, msg_id, 2)
-    print(msg)
+    print(f'Message: {msg}')
 
     # Connect to the receiver
     connection_info = auto_connect_receiver()
@@ -195,16 +195,30 @@ def poll_ubx_msg(msg_class, msg_id):
     ubr = UBXReader(stream)
 
     output = msg.serialize()
-    print(output)
+    print(f'Output: {output}')
     stream.write(output)
 
+    time.sleep(0.1)
     response = stream.read(10000)
-    print(response)
+    print(f'Response: {response}')
     raw_data, parsed_data = ubr.read()
 
-    print(raw_data)
+    print(f'Raw Data: {raw_data}')
+    print(f'Parsed Data: {parsed_data}')
+
+def poll_mon_ver(stream):
+    ubr = UBXReader(stream)
+    stream.write(MON_VER_MSG)
+    response = stream.read(2048)
+    raw_data, parsed_data = ubr.read()
+    parsed_data = ubr.parse(raw_data)
+    # msg = UBXReader.parse(raw_data)
     print(parsed_data)
 
+    print('Response Type: ' + str(type(response)))
+    print(f'Response: {response}')
+    print(f'Raw Data: {raw_data}')
+    print(f'Parsed Data: {parsed_data}')
 
 
 
@@ -214,5 +228,5 @@ if __name__ == "__main__":
     #com_port, baudrate = get_receiver_connection_info(serial_ports)
     #log_receiver(com_port, baudrate)
     #log_receiver()
-    get_nav_pvt()
-    #poll_ubx_msg("NAV", "NAV-PVT")
+    #get_nav_pvt()
+    poll_ubx_msg("MON", "MON-VER")

@@ -6,8 +6,10 @@ const disconnectButton = document.getElementById('disconnect-button');
 const connectButton = document.getElementById('connect-button');
 const clearLogButton = document.getElementById('clear-log-button');
 const testButton = document.getElementById('test-button');
+const monVerButton = document.getElementById('poll-mon-ver-button');
 const serialPortSelect = document.getElementById('serial-port-select');
 const baudrateSelect = document.getElementById('baudrate-select');
+
 const logContainer = document.getElementById('log-container');
 
 let socket = io();
@@ -120,6 +122,11 @@ socket.on('rx_connection_status', function(data) {
     }
 })
 
+let monVer = () => {
+    console.log("monVer");
+    socket.emit('mon_ver');
+}
+
 
 listSerialPorts();
 isRxConnected();
@@ -130,3 +137,4 @@ disconnectButton.addEventListener("click", disconnectRx);
 clearLogButton.addEventListener("click", clearLog);
 testButton.addEventListener("click", sendMessage);
 connectButton.addEventListener("click", connectReceiver);
+monVerButton.addEventListener("click", monVer);

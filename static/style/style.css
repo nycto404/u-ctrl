@@ -104,12 +104,20 @@ a {
 
 .connection-status {
     height: auto;
+    width: auto;
     display: flex;
     justify-content: center;
     align-items: center;
     background-color: #dc3545;
     border-radius: 10px;
     cursor: default;
+}
+
+.receiver-info {
+    display: grid;
+    grid-template-columns: auto auto auto;
+    border-radius: 10px;
+    border-color: white;
 }
 
 .log-container {
