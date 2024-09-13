@@ -68,6 +68,7 @@ def auto_connect_receiver(socketio=None):
                         print(str(response))
                         #logging.info("Response: " + str(response))
 
+                        # Either UBX or NMEA message has been received
                         if "ROM BASE" in str(response) or "$G" in str(response): # 
                             serial_port = port.device
                             #logging.info("UBX message received!")
@@ -80,11 +81,18 @@ def auto_connect_receiver(socketio=None):
                                     'stream': str(stream),
                                     })
                             return [serial_port, baudrate, stream]
+                        
+                        # If received data length is less or equal one byte, abort the attempt
+                        elif (len(response) <= 1):
+                            print("No data... Skipping...")
+                            break
+
                         else:
                             #logging.warning("No UBX message received... Closing serial connection...")
                             hope = True # Set hope to true if some data is received in the stream
-                            print("Closing serial connection...")
+                            print("Only garbage received... Closing serial connection...")
                             stream.close()
+                            
                     except Exception as e:
                         print(f"Error: {e}")
                         if "Access is denied" in str(e) or "semaphore timeout" in str(e):
