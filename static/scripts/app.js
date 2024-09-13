@@ -10,6 +10,12 @@ const monVerButton = document.getElementById('poll-mon-ver-button');
 const serialPortSelect = document.getElementById('serial-port-select');
 const baudrateSelect = document.getElementById('baudrate-select');
 
+const receiverInfo = document.getElementById('receiver-info');
+const monVerTable = document.getElementById('mon-ver-table');
+const softwareVersion = document.getElementById('software-version');
+const hardwareVersion = document.getElementById('hardware-version');
+const extensions = document.getElementById('extensions');
+
 const logContainer = document.getElementById('log-container');
 
 let socket = io();
@@ -111,6 +117,7 @@ socket.on('rx_connection_status', function(data) {
         autoConnectButton.disabled = true;
         connectButton.disabled = true;
         disconnectButton.disabled = false;
+        monVer();
     } else {
         $(".connection-status").css({
             "background-color": "#e3103a"
@@ -127,6 +134,28 @@ let monVer = () => {
     socket.emit('mon_ver');
 }
 
+socket.on('mon-ver', function(data) {
+    $('#software-version td').remove();
+    $('#hardware-version td').remove();
+    $('#extensions tr').remove();
+
+    for (info in data['data']) {
+        console.log(data['data'][info]);
+        if (info == 0) {
+            let monVer = document.createElement('td');
+            monVer.textContent = data['data'][info];    
+            softwareVersion.appendChild(monVer);
+        } else if (info == 1) {
+            let monVer = document.createElement('td');
+            monVer.textContent = data['data'][info];    
+            hardwareVersion.appendChild(monVer);
+        } else {
+            let monVer = document.createElement('tr');
+            monVer.textContent = data['data'][info];    
+            extensions.appendChild(monVer);
+        }
+    }
+})
 
 listSerialPorts();
 isRxConnected();

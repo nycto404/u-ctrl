@@ -52,7 +52,6 @@ def is_rx_connected():
                                 'stream': str(stream)
                                 })
                                 
-
 @socketio.on('disconnect_rx')
 def disconnect_rx():
     print('disconnect_rx')
@@ -67,7 +66,8 @@ def disconnect_rx():
 
 @socketio.on('mon_ver')
 def mon_ver():
-    ubxlib.poll_mon_ver(stream)
+    payload = ubxlib.poll_mon_ver(stream)
+    emit('mon-ver', {'data': payload})
 
 
 #Log rx

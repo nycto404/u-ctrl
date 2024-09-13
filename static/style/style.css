@@ -113,11 +113,31 @@ a {
     cursor: default;
 }
 
-.receiver-info {
+.receiver-data {
     display: grid;
-    grid-template-columns: auto auto auto;
+    grid-template-columns: 25% auto;
+    column-gap: 10px;
+    height: 20%;
     border-radius: 10px;
     border-color: white;
+}
+
+.receiver-info, .pos-data {
+    display: grid;
+    grid-template-columns: auto;
+    border-radius: 10px;
+    border-color: white;
+    overflow-y: auto;
+    background-color: var(--log-container-color);
+    padding: 20px;
+}
+
+.receiver-info, .pos-data p {
+    padding-bottom: 2px;
+}
+
+tr, td {
+    font-size: small;
 }
 
 .log-container {
@@ -126,7 +146,7 @@ a {
     overflow-y: auto;
     background-color: var(--log-container-color);
     border-radius: 20px;
-    padding: 10px;
+    padding: 20px;
 }
 
 .log-container p{

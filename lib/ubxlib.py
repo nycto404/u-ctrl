@@ -133,8 +133,47 @@ def connect_receiver(serial_port, baudrate, socketio=None):
         print(f"Error: {e}")
         if "Access is denied" in str(e) or "semaphore timeout" in str(e):
             return
-        
-        
+
+def poll_mon_ver(stream):
+    payload = []
+    ubr = UBXReader(stream, protfilter=NMEA_PROTOCOL | UBX_PROTOCOL)
+    while True:
+      stream.write(MON_VER_MSG)
+      raw_data, parsed_data = ubr.read()
+      if 'MON-VER' in str(parsed_data):
+        payload.append(parsed_data.swVersion.decode().replace('\x00', ''))
+        payload.append(parsed_data.hwVersion.decode().replace('\x00', ''))
+        payload.append(parsed_data.extension_01.decode().replace('\x00', ''))
+        payload.append(parsed_data.extension_02.decode().replace('\x00', ''))
+        payload.append(parsed_data.extension_03.decode().replace('\x00', ''))
+        payload.append(parsed_data.extension_04.decode().replace('\x00', ''))
+        payload.append(parsed_data.extension_05.decode().replace('\x00', ''))
+        payload.append(parsed_data.extension_06.decode().replace('\x00', ''))
+        payload.append(parsed_data.extension_07.decode().replace('\x00', ''))
+        print(payload)
+        print(type(parsed_data))
+        print(parsed_data)
+        print(parsed_data.swVersion.decode())
+        print(parsed_data.hwVersion.decode())
+        print(parsed_data.extension_01.decode())
+        print(parsed_data.extension_02.decode())
+        print(parsed_data.extension_03.decode())
+        print(parsed_data.extension_04.decode())
+        print(parsed_data.extension_05.decode())
+        print(parsed_data.extension_06.decode())
+        print(parsed_data.extension_07.decode())
+        return payload
+  
+
+
+
+
+
+
+
+
+
+
 def log_receiver(socketio=None):
     '''Get position and fixtype from NAV-PVT msg'''
     connection_info = auto_connect_receiver()
@@ -205,23 +244,6 @@ def poll_ubx_msg(msg_class, msg_id):
 
     print(f'Raw Data: {raw_data}')
     print(f'Parsed Data: {parsed_data}')
-
-def poll_mon_ver(stream):
-    ubr = UBXReader(stream)
-    stream.write(MON_VER_MSG)
-    response = stream.read(2048)
-    raw_data, parsed_data = ubr.read()
-    parsed_data = ubr.parse(raw_data)
-    # msg = UBXReader.parse(raw_data)
-    print(parsed_data)
-
-    print('Response Type: ' + str(type(response)))
-    print(f'Response: {response}')
-    print(f'Raw Data: {raw_data}')
-    print(f'Parsed Data: {parsed_data}')
-
-
-
 
 if __name__ == "__main__":
     #serial_ports = list_available_serial_ports()
