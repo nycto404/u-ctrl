@@ -69,8 +69,11 @@ def mon_ver():
     payload = ubxlib.poll_mon_ver(stream)
     emit('mon-ver', {'data': payload})
 
+@socketio.on('log_rx_output')
+def log_rx_output():
+    print('log_rx_output')
+    ubxlib.log_rx_output(stream, socketio)
 
-#Log rx
 
 
 

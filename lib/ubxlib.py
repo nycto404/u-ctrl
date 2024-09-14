@@ -172,91 +172,30 @@ def poll_mon_ver(stream):
         print(parsed_data.extension_07.decode())
         return payload
   
+def log_rx_output(stream, socketio = None):
+    ubr = UBXReader(stream, protfilter=NMEA_PROTOCOL | UBX_PROTOCOL)
+    while stream:
+        raw_data, parsed_data = ubr.read()
+        print(raw_data)
+        print(parsed_data)
 
+        # IF NAV-PVT is found, create dictionary for easy handling on client side
+        if 'PVT' in str(parsed_data):
+            pvt_data = {
+                        'fix_type': parsed_data.fixType,
+                        'lat': parsed_data.lat,
+                        'lon': parsed_data.lon,
+                        'height': parsed_data.height,
+                        'speed': parsed_data.gSpeed
+            }
+            print(f'NAV-PVT data: {pvt_data}')
+            if socketio:
+                socketio.emit('nav-pvt', {'data': pvt_data})            
 
-
-
-
-
-
-
-
-
-def log_receiver(socketio=None):
-    '''Get position and fixtype from NAV-PVT msg'''
-    connection_info = auto_connect_receiver()
-    try:
-        stream = connection_info[2]
-        ubr = UBXReader(stream, protfilter=2)
-    except Exception as e:
-        traceback_str = traceback.format_exc()
-        print(traceback_str)
-
-    while True:
-        try:
-            # Read raw data and parsed data
-            (raw_data, parsed_data) = ubr.read()
-            # Parse the raw data
-            msg = UBXReader.parse(raw_data)
-            print(parsed_data)
-            # If NAV-PVT msg found, parse lat lon values and write them to the file
-            if ("NAV-PVT" in str(msg)):
-                print(msg.lat, msg.lon, msg.fixType)
-                coordinates.append([msg.lat, msg.lon])
-                google_maps_link = "https://www.google.com/maps?q=" + str(msg.lat) + "," + str(msg.lon)
-                print(msg, msg.lat, msg.lon, msg.fixType, google_maps_link)
-                socketio.emit()
-            ###############################################################
-        except Exception as e:
-            tb = traceback.format_exc()
-            print(tb)  
-
-def get_nav_pvt(stream):
-    try:
-        ubr = UBXReader(stream, protfilter= NMEA_PROTOCOL | UBX_PROTOCOL)
-        nav_pvt = UBXMessage(b'NAV', b'PVT', 2)
-        print(nav_pvt)
-
-        while True:
-            raw_data, parsed_data = ubr.read()
-            #print(raw_data)
-            #print(parsed_data)
-            if "PVT" in str(parsed_data):
-                print("\nPVT found!")
-                print(parsed_data)
-                return parsed_data
-        
-    
-    except Exception as e:
-        traceback_str = traceback.format_exc()
-        print(traceback_str)
-
-def poll_ubx_msg(msg_class, msg_id):
-    # Construct the UBX message
-    msg = UBXMessage(msg_class, msg_id, 2)
-    print(f'Message: {msg}')
-
-    # Connect to the receiver
-    connection_info = auto_connect_receiver()
-    stream = connection_info[2]
-    ubr = UBXReader(stream)
-
-    output = msg.serialize()
-    print(f'Output: {output}')
-    stream.write(output)
-
-    time.sleep(0.1)
-    response = stream.read(10000)
-    print(f'Response: {response}')
-    raw_data, parsed_data = ubr.read()
-
-    print(f'Raw Data: {raw_data}')
-    print(f'Parsed Data: {parsed_data}')
+        if socketio:
+            socketio.emit('log_rx_output', {'data': str(parsed_data)})
 
 if __name__ == "__main__":
-    #serial_ports = list_available_serial_ports()
-    #com_port, baudrate = get_receiver_connection_info(serial_ports)
-    #log_receiver(com_port, baudrate)
-    #log_receiver()
-    #get_nav_pvt()
-    poll_ubx_msg("MON", "MON-VER")
+    print('Script only exectution')
+    stream = auto_connect_receiver()[2]
+    log_rx_output(stream)

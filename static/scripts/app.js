@@ -95,13 +95,11 @@ let disconnectRx = () => {
 
 
 let clearLog = () => {
-    logContainer.textContent = ""; 
+    console.log('clearLog')
+    $('.log-container p').remove();
 }
 
-
-
-
-let isRxConnected = () => {
+function isRxConnected() {
     console.log('isRxConnected');
     socket.emit('is_rx_connected');
 }
@@ -113,16 +111,15 @@ socket.on('rx_connection_status', function(data) {
         $(".connection-status").css({
             "background-color": "#1adb61"
         });
-        $("#connection-status").text("Connected");
         autoConnectButton.disabled = true;
         connectButton.disabled = true;
         disconnectButton.disabled = false;
-        monVer();
+        //monVer();
+        logRxOutput();
     } else {
         $(".connection-status").css({
             "background-color": "#e3103a"
         });
-        $("#connection-status").text("Disconnected");
         autoConnectButton.disabled = false;
         connectButton.disabled = false;
         disconnectButton.disabled = true;
@@ -156,6 +153,32 @@ socket.on('mon-ver', function(data) {
         }
     }
 })
+
+let logRxOutput = () => {
+    console.log('logRxOutpu9t');
+    socket.emit('log_rx_output');
+}
+
+socket.on('log_rx_output', function(data) {
+    console.log('log_rx_output');
+    console.log(data['data']);
+    let newLogEntry = document.createElement('p');
+    newLogEntry.textContent = data['data'];
+    logContainer.appendChild(newLogEntry);
+    logContainer.scrollTop = logContainer.scrollHeight;
+})
+
+socket.on('nav-pvt', function(data) {
+    $('.nav-pvt-data-table td').remove()
+    console.log('nav-pvt');
+    console.log(data['data'])
+    Object.keys(data['data']).forEach(key => {
+        let newEntry = document.createElement('td');
+        newEntry.textContent = data['data'][key];
+        document.getElementById(key).appendChild(newEntry);
+    })
+})
+
 
 listSerialPorts();
 isRxConnected();
