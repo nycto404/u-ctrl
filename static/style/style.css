@@ -144,10 +144,15 @@ tr, td {
 .log-container {
     height: 50%;
     width: 100%;
-    overflow-y: auto;
+    /* overflow-y: auto; */
     background-color: var(--log-container-color);
     border-radius: 20px;
     padding: 20px;
+}
+
+.logs {
+    overflow-y: auto;
+    height: 100%;
 }
 
 .log-container p{

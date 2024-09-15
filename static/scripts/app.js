@@ -16,7 +16,7 @@ const softwareVersion = document.getElementById('software-version');
 const hardwareVersion = document.getElementById('hardware-version');
 const extensions = document.getElementById('extensions');
 
-const logContainer = document.getElementById('log-container');
+const logs = document.getElementById('logs');
 
 let socket = io();
 
@@ -29,7 +29,7 @@ socket.on('available_serial_ports', function(data) {
     console.log('Avilable serial ports: ', typeof(data));
     let newLogEntry = document.createElement('p');
     newLogEntry.textContent = data;
-    logContainer.appendChild(newLogEntry);
+    logs.appendChild(newLogEntry);
     console.log(serialPortSelect.options.length);
     if (serialPortSelect.options.length == 1) {
         for (let serialPort in data) {
@@ -49,7 +49,7 @@ socket.on('message_response', function(data) {
     console.log('Message response: ', data)
     let newLogEntry = document.createElement('p');
     newLogEntry.textContent = data.data;
-    logContainer.appendChild(newLogEntry);
+    logs.appendChild(newLogEntry);
 })
 
 let autoConnectReceiver = () => {
@@ -61,7 +61,7 @@ socket.on('connection_log', function(data) {
     console.log('Connection log: ', data);
     let newLogEntry = document.createElement('p');
     newLogEntry.textContent = data.serial_port + ", " + data.baudrate + ", " + data.attempt;
-    logContainer.appendChild(newLogEntry);
+    logs.appendChild(newLogEntry);
 })
 
 let connectReceiver = () => {
@@ -160,12 +160,17 @@ let logRxOutput = () => {
 }
 
 socket.on('log_rx_output', function(data) {
+    const maxLogLength = 2000;
     console.log('log_rx_output');
     console.log(data['data']);
     let newLogEntry = document.createElement('p');
     newLogEntry.textContent = data['data'];
-    logContainer.appendChild(newLogEntry);
-    logContainer.scrollTop = logContainer.scrollHeight;
+    logs.appendChild(newLogEntry);
+    logs.scrollTop = logs.scrollHeight;
+    if (logs.children.length >= maxLogLength) {
+        logs.removeChild(logs.firstChild);
+    }
+    console.log('Length of log container: ', logs.children.length)
 })
 
 socket.on('nav-pvt', function(data) {
