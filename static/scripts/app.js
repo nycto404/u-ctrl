@@ -161,7 +161,7 @@ let logRxOutput = () => {
 }
 
 socket.on('log_rx_output', function(data) {
-    const maxLogLength = 2000;
+    const maxLogLength = 1000;
     console.log('log_rx_output');
     console.log(data['data']);
     let newLogEntry = document.createElement('p');
