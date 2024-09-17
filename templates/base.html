@@ -3,6 +3,13 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <!-- Stylesheet for Leaflet map -->
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+        <!-- Map Stuff, make sure you put this AFTER Leaflet's CSS -->
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+        <script src="https://unpkg.com/leaflet-rotatedmarker"></script> <!-- For rotating the marker on the map according to the heading -->
+        <script src="https://unpkg.com/leaflet-providers@latest/leaflet-providers.js"></script> <!-- To easily integrate maap layeres from different providers, url for viewing free providers: https://leaflet-extras.github.io/leaflet-providers/preview/index.html ,  Github repo: https://github.com/leaflet-extras/leaflet-providers  -->
         <!-- Tab icon -->
         <link rel="icon" href="/static/icons/satellite-dish-svgrepo-com.svg">
         <!-- Fontawesome icon kit -->

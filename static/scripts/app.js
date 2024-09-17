@@ -116,7 +116,7 @@ socket.on('rx_connection_status', function(data) {
         connectButton.disabled = true;
         disconnectButton.disabled = false;
         monVer();
-        setTimeout(logRxOutput, 3000)
+        setTimeout(logRxOutput, 1500)
     } else {
         $(".connection-status").css({
             "background-color": "#e3103a"
@@ -183,8 +183,8 @@ socket.on('nav-pvt', function(data) {
         newEntry.textContent = data['data'][key];
         document.getElementById(key).appendChild(newEntry);
     })
+    marker.setLatLng([data['data']['lat'], data['data']['lon']]);
 })
-
 
 listSerialPorts();
 isRxConnected();
@@ -196,4 +196,3 @@ clearLogButton.addEventListener("click", clearLog);
 testButton.addEventListener("click", sendMessage);
 connectButton.addEventListener("click", connectReceiver);
 monVerButton.addEventListener("click", monVer);
-toggleRxOutputLog.addEventListener("click", logRxOutput);
