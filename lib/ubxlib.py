@@ -85,6 +85,8 @@ def auto_connect_receiver(socketio=None):
                         # If received data length is less or equal one byte, abort the attempt
                         elif (len(response) <= 1):
                             print("No data... Skipping...")
+                            stream.close()
+                            time.sleep(0.25) # Wait a bit after closing
                             break
 
                         else:
@@ -92,6 +94,7 @@ def auto_connect_receiver(socketio=None):
                             hope = True # Set hope to true if some data is received in the stream
                             print("Only garbage received... Closing serial connection...")
                             stream.close()
+                            time.sleep(0.25) # Wait a bit after closing
                             
                     except Exception as e:
                         print(f"Error: {e}")
@@ -136,6 +139,7 @@ def connect_receiver(serial_port, baudrate, socketio=None):
                 return [serial_port, baudrate, stream]
             else:
                 stream.close()
+                time.sleep(0.25) # Wait a bit after closing
 
     except Exception as e:
         print(f"Error: {e}")
