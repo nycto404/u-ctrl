@@ -7,6 +7,7 @@ const connectButton = document.getElementById('connect-button');
 const clearLogButton = document.getElementById('clear-log-button');
 const testButton = document.getElementById('test-button');
 const monVerButton = document.getElementById('poll-mon-ver-button');
+const toggleRxOutputLog = document.getElementById('toggle-rx-output-log');
 const serialPortSelect = document.getElementById('serial-port-select');
 const baudrateSelect = document.getElementById('baudrate-select');
 
@@ -114,8 +115,8 @@ socket.on('rx_connection_status', function(data) {
         autoConnectButton.disabled = true;
         connectButton.disabled = true;
         disconnectButton.disabled = false;
-        //monVer();
-        logRxOutput();
+        monVer();
+        setTimeout(logRxOutput, 3000)
     } else {
         $(".connection-status").css({
             "background-color": "#e3103a"
@@ -195,3 +196,4 @@ clearLogButton.addEventListener("click", clearLog);
 testButton.addEventListener("click", sendMessage);
 connectButton.addEventListener("click", connectReceiver);
 monVerButton.addEventListener("click", monVer);
+toggleRxOutputLog.addEventListener("click", logRxOutput);

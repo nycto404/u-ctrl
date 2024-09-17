@@ -3,7 +3,9 @@ from flask_socketio import SocketIO, send, emit
 import lib.ubxlib as ubxlib
 
 stream = None # Initialize data stream variable
-rx_connected = False
+active_connections = [] # For later implementation of several connections
+rx_connected = False # 
+is_logging = False # To avoid creating several UBXReader instances when rx_logging is triggere, not a good solution though
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
@@ -28,6 +30,9 @@ def auto_connect_receiver():
     connection_info = ubxlib.auto_connect_receiver(socketio)
     print(connection_info)
     stream = connection_info[2]
+    if stream not in active_connections:
+        active_connections.append(stream)
+    print(active_connections)
     is_rx_connected()
 
 @socketio.on('connect_receiver')
@@ -38,6 +43,9 @@ def connect(data):
     connection_info = ubxlib.connect_receiver(serial_port, baudrate, socketio)
     print(connection_info)
     stream = connection_info[2]
+    if stream not in active_connections:
+        active_connections.append(stream)
+    print(active_connections)
     is_rx_connected()
 
 @socketio.on('is_rx_connected')
@@ -55,24 +63,32 @@ def is_rx_connected():
 @socketio.on('disconnect_rx')
 def disconnect_rx():
     print('disconnect_rx')
-    global stream
+    global stream, is_logging
     print(stream)
     if stream:
         print('Closing stream...')
         stream.close()
         stream = None
+        is_logging = False
+
         
     is_rx_connected()
 
 @socketio.on('mon_ver')
 def mon_ver():
-    payload = ubxlib.poll_mon_ver(stream)
-    emit('mon-ver', {'data': payload})
+    print('mon_ver')
+    global is_logging
+    if is_logging == False:
+        payload = ubxlib.poll_mon_ver(stream)
+        emit('mon-ver', {'data': payload})
 
 @socketio.on('log_rx_output')
 def log_rx_output():
-    print('log_rx_output')
-    ubxlib.log_rx_output(stream, socketio)
+    global is_logging
+    if is_logging == False:
+        print('log_rx_output')
+        is_logging = True
+        ubxlib.log_rx_output(stream, socketio)
 
 
 

@@ -157,7 +157,7 @@ def poll_mon_ver(stream):
         payload.append(parsed_data.extension_04.decode().replace('\x00', ''))
         payload.append(parsed_data.extension_05.decode().replace('\x00', ''))
         payload.append(parsed_data.extension_06.decode().replace('\x00', ''))
-        payload.append(parsed_data.extension_07.decode().replace('\x00', ''))
+        #payload.append(parsed_data.extension_07.decode().replace('\x00', ''))
         print(payload)
         print(type(parsed_data))
         print(parsed_data)
@@ -169,7 +169,7 @@ def poll_mon_ver(stream):
         print(parsed_data.extension_04.decode())
         print(parsed_data.extension_05.decode())
         print(parsed_data.extension_06.decode())
-        print(parsed_data.extension_07.decode())
+        #print(parsed_data.extension_07.decode())
         return payload
   
 def log_rx_output(stream, socketio = None):
