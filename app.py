@@ -1,6 +1,7 @@
-from flask import Flask, render_template, jsonify
+from flask import Flask, render_template, jsonify, session
 from flask_socketio import SocketIO, send, emit
 import lib.ubxlib as ubxlib
+import uuid
 
 stream = None # Initialize data stream variable
 active_connections = [] # For later implementation of several connections
@@ -18,6 +19,14 @@ def index():
 @app.route("/about")
 def about():
     return render_template("about.html")
+
+@socketio.on('connect')
+def print_connection_info():
+    print('print_connection_info')
+    if 'session_id' not in session:
+        session['session_id'] = str(uuid.uuid4())
+        print(f'Session ID: {session}')
+
 
 @socketio.on('list_serial_ports')
 def list_serial_ports():

@@ -43,7 +43,7 @@ footer {
     width: 100%;
     height: 200px;
     position: relative;
-    top: 100%;
+    top: 1000px;
     display: flex;
     flex-direction: row;
     justify-content: center;
@@ -157,11 +157,12 @@ tr, td {
 
 .logs {
     overflow-y: auto;
-    height: 100%;
+    height: 90%;
 }
 
 .log-container p{
     margin-bottom: 1px;    
+    font-size: small;
 }
 
 .about {
