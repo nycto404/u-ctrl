@@ -19,7 +19,22 @@ const extensions = document.getElementById('extensions');
 
 const logs = document.getElementById('logs');
 
+let clientId = sessionStorage.getItem('clientId');
+
+if (!clientId) {
+    clientId = Math.random().toString(36).substring(2); // Unique ID
+    sessionStorage.setItem('clientId', clientId);
+}
+
 let socket = io();
+
+socket.on('connect', function() {
+    socket.emit('register_client', {clientId: clientId});
+});
+
+// socket.on('disconnect', function() {
+//     socket.emit('unregister_client', {clientId: clientId});
+// });
 
 let listSerialPorts = () => {
     console.log('listSerialPorts');

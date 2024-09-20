@@ -1,10 +1,10 @@
-from flask import Flask, render_template, jsonify, session
+from flask import Flask, render_template, jsonify, request
 from flask_socketio import SocketIO, send, emit
 import lib.ubxlib as ubxlib
 import uuid
 
 stream = None # Initialize data stream variable
-active_connections = [] # For later implementation of several connections
+clients = {}
 rx_connected = False # 
 is_logging = False # To avoid creating several UBXReader instances when rx_logging is triggere, not a good solution though
 
@@ -20,12 +20,20 @@ def index():
 def about():
     return render_template("about.html")
 
-@socketio.on('connect')
-def print_connection_info():
-    print('print_connection_info')
-    if 'session_id' not in session:
-        session['session_id'] = str(uuid.uuid4())
-        print(f'Session ID: {session}')
+@socketio.on('register_client')
+def register_client(data):
+    client_id = data['clientId']
+    sid = request.sid
+    print(f'cliend_id {client_id} connected with sid {sid}')
+    
+    clients[client_id] = sid
+    print(clients)
+
+@socketio.on('disconnect')
+def unregister_client(data):
+    print('unregister_client')
+    clients.pop(data['client_id'])
+    print(clients)
 
 
 @socketio.on('list_serial_ports')
@@ -39,9 +47,6 @@ def auto_connect_receiver():
     connection_info = ubxlib.auto_connect_receiver(socketio)
     print(connection_info)
     stream = connection_info[2]
-    if stream not in active_connections:
-        active_connections.append(stream)
-    print(active_connections)
     is_rx_connected()
 
 @socketio.on('connect_receiver')
@@ -52,9 +57,6 @@ def connect(data):
     connection_info = ubxlib.connect_receiver(serial_port, baudrate, socketio)
     print(connection_info)
     stream = connection_info[2]
-    if stream not in active_connections:
-        active_connections.append(stream)
-    print(active_connections)
     is_rx_connected()
 
 @socketio.on('is_rx_connected')
