@@ -11,6 +11,8 @@ const toggleRxOutputLog = document.getElementById('toggle-rx-output-log');
 const serialPortSelect = document.getElementById('serial-port-select');
 const baudrateSelect = document.getElementById('baudrate-select');
 
+const lastSuccessfulConnectionDetails = document.getElementById('last-successful-connection-details');
+
 const receiverInfo = document.getElementById('receiver-info');
 const monVerTable = document.getElementById('mon-ver-table');
 const softwareVersion = document.getElementById('software-version');
@@ -130,6 +132,11 @@ socket.on('rx_connection_status', function(data) {
         autoConnectButton.disabled = true;
         connectButton.disabled = true;
         disconnectButton.disabled = false;
+        if (!localStorage.getItem('connection_details')) {
+            lastSuccessfulConnectionDetails.textContent = data['stream'];
+            $('.connection-status').attr('title', data['stream']);
+        }
+        localStorage.setItem('connection_details', data['stream']);
         monVer();
         setTimeout(logRxOutput, 1500)
     } else {
@@ -176,23 +183,22 @@ let logRxOutput = () => {
 }
 
 socket.on('log_rx_output', function(data) {
-    const maxLogLength = 1000;
+    const maxLogLength = 100;
     console.log('log_rx_output');
     console.log(data['data']);
     let newLogEntry = document.createElement('p');
     newLogEntry.textContent = data['data'];
     logs.appendChild(newLogEntry);
-    logs.scrollTop = logs.scrollHeight;
     if (logs.children.length >= maxLogLength) {
         logs.removeChild(logs.firstChild);
     }
+    // logs.scrollTop = logs.scrollHeight;
     console.log('Length of log container: ', logs.children.length)
 })
 
 socket.on('nav-pvt', function(data) {
     $('.nav-pvt-data-table td').remove()
     console.log('nav-pvt');
-    console.log(data['data'])
     Object.keys(data['data']).forEach(key => {
         let newEntry = document.createElement('td');
         newEntry.textContent = data['data'][key];
@@ -203,6 +209,9 @@ socket.on('nav-pvt', function(data) {
 
 listSerialPorts();
 isRxConnected();
+
+lastSuccessfulConnectionDetails.textContent = localStorage.getItem('connection_details');
+$('.connection-status').attr('title', localStorage.getItem('connection_details'));
 
 listSerialPortsButton.addEventListener("click", listSerialPorts);
 autoConnectButton.addEventListener("click", autoConnectReceiver);
