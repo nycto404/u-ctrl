@@ -192,7 +192,7 @@ socket.on('log_rx_output', function(data) {
     if (logs.children.length >= maxLogLength) {
         logs.removeChild(logs.firstChild);
     }
-    // logs.scrollTop = logs.scrollHeight;
+    logs.scrollTop = logs.scrollHeight;
     console.log('Length of log container: ', logs.children.length)
 })
 
