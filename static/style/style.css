@@ -119,6 +119,12 @@ a {
     background-color: #dc3545;
     border-radius: 10px;
     cursor: default;
+    transition: transform 0.5s;
+    cursor: pointer
+}
+
+.connection-status:hover {
+    transform: rotate(180deg);
 }
 
 .receiver-data {

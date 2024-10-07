@@ -81,8 +81,6 @@ def disconnect_rx():
         stream.close()
         stream = None
         is_logging = False
-
-        
     is_rx_connected()
 
 @socketio.on('mon_ver')
