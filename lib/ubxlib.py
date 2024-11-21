@@ -193,6 +193,10 @@ def log_rx_output(stream, socketio = None):
         # IF NAV-PVT is found, create dictionary for easy handling on client side
         if 'PVT' in str(parsed_data):
             pvt_data = {
+                        'iTOW': parsed_data.iTOW,
+                        'year': parsed_data.year,
+                        'month': parsed_data.month,
+                        'day': parsed_data.day,
                         'fix_type': parsed_data.fixType,
                         'lat': parsed_data.lat,
                         'lon': parsed_data.lon,

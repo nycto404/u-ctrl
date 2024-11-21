@@ -1,14 +1,5 @@
 console.log('app.js');
 
-const listSerialPortsButton = document.getElementById('list-serial-ports-button');
-const autoConnectButton = document.getElementById('autoconnect-button');
-const disconnectButton = document.getElementById('disconnect-button');
-const connectButton = document.getElementById('connect-button');
-const clearLogButton = document.getElementById('clear-log-button');
-const testButton = document.getElementById('test-button');
-const monVerButton = document.getElementById('poll-mon-ver-button');
-const enableNavPvtButton = document.getElementById('enable-nav-pvt-button');
-const toggleRxOutputLog = document.getElementById('toggle-rx-output-log');
 const serialPortSelect = document.getElementById('serial-port-select');
 const baudrateSelect = document.getElementById('baudrate-select');
 
@@ -130,9 +121,9 @@ socket.on('rx_connection_status', function(data) {
         $(".connection-status").css({
             "background-color": "#1adb61"
         });
-        autoConnectButton.disabled = true;
-        connectButton.disabled = true;
-        disconnectButton.disabled = false;
+        $('#autoconnect-button').prop('disabled', true);
+        $('#connect-button').prop('disabled', true);
+        $('#disconnect-button').prop('disabled', false);
         if (!localStorage.getItem('connection_details')) {
             lastSuccessfulConnectionDetails.textContent = data['stream'];
             $('.connection-status').attr('title', data['stream']);
@@ -144,9 +135,9 @@ socket.on('rx_connection_status', function(data) {
         $(".connection-status").css({
             "background-color": "#e3103a"
         });
-        autoConnectButton.disabled = false;
-        connectButton.disabled = false;
-        disconnectButton.disabled = true;
+        $('#autoconnect-button').prop('disabled', false);
+        $('#connect-button').prop('disabled', false);
+        $('#disconnect-button').prop('disabled', true);
     }
 })
 
@@ -219,11 +210,36 @@ isRxConnected();
 lastSuccessfulConnectionDetails.textContent = localStorage.getItem('connection_details');
 $('.connection-status').attr('title', localStorage.getItem('connection_details'));
 
-listSerialPortsButton.addEventListener("click", listSerialPorts);
-autoConnectButton.addEventListener("click", autoConnectReceiver);
-disconnectButton.addEventListener("click", disconnectRx);
-clearLogButton.addEventListener("click", clearLog);
-testButton.addEventListener("click", sendMessage);
-connectButton.addEventListener("click", connectReceiver);
-monVerButton.addEventListener("click", monVer);
-enableNavPvtButton.addEventListener("click", enableNavPvt);
+$(document).ready(function() {
+    $('#list-serial-ports-button').click(function(){
+        listSerialPorts();
+    });
+    $('#autoconnect-button').click(function(){
+        autoConnectReceiver();
+    });
+    $('#disconnect-button').click(function(){
+        disconnectRx();
+    });
+    $('#clear-log-button').click(function(){
+        clearLog();
+    });
+    $('#test-button').click(function(){
+        console.log('test')
+    });
+    $('#poll-mon-ver-button').click(function(){
+        monVer();
+    });
+    $('#enable-nav-pvt-button').click(function(){
+        enableNavPvt();
+    });
+})
+
+
+
+// autoConnectButton.addEventListener("click", autoConnectReceiver);
+// disconnectButton.addEventListener("click", disconnectRx);
+// clearLogButton.addEventListener("click", clearLog);
+// testButton.addEventListener("click", sendMessage);
+// connectButton.addEventListener("click", connectReceiver);
+// monVerButton.addEventListener("click", monVer);
+// enableNavPvtButton.addEventListener("click", enableNavPvt);
