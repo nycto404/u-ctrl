@@ -7,6 +7,7 @@ const connectButton = document.getElementById('connect-button');
 const clearLogButton = document.getElementById('clear-log-button');
 const testButton = document.getElementById('test-button');
 const monVerButton = document.getElementById('poll-mon-ver-button');
+const enableNavPvtButton = document.getElementById('enable-nav-pvt-button');
 const toggleRxOutputLog = document.getElementById('toggle-rx-output-log');
 const serialPortSelect = document.getElementById('serial-port-select');
 const baudrateSelect = document.getElementById('baudrate-select');
@@ -178,8 +179,13 @@ socket.on('mon-ver', function(data) {
 })
 
 let logRxOutput = () => {
-    console.log('logRxOutpu9t');
+    console.log('logRxOutput');
     socket.emit('log_rx_output');
+}
+
+let enableNavPvt = () => {
+    console.log('enableNavPvt');
+    socket.emit('enable_nav_pvt');
 }
 
 socket.on('log_rx_output', function(data) {
@@ -220,3 +226,4 @@ clearLogButton.addEventListener("click", clearLog);
 testButton.addEventListener("click", sendMessage);
 connectButton.addEventListener("click", connectReceiver);
 monVerButton.addEventListener("click", monVer);
+enableNavPvtButton.addEventListener("click", enableNavPvt);

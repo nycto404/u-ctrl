@@ -99,6 +99,14 @@ def log_rx_output():
         is_logging = True
         ubxlib.log_rx_output(stream, socketio)
 
+@socketio.on('enable_nav_pvt')
+def enable_nav_pvt():
+    global stream
+    ubxlib.enable_nav_pvt_message(stream, socketio)
+    print('enable_nav_pvt')
+
+
+
 
 
 

@@ -1,6 +1,6 @@
 import serial.tools.list_ports, logging, time, traceback
 from serial import Serial
-from pyubx2 import UBXReader, UBXMessage, UBX_CLASSES, UBX_MSGIDS, NMEA_PROTOCOL, UBX_PROTOCOL
+from pyubx2 import UBXReader, UBXMessage, NMEA_PROTOCOL, UBX_PROTOCOL, SET_LAYER_RAM, SET_LAYER_FLASH, SET_LAYER_BBR, TXN_NONE
 from flask_socketio import SocketIO, emit
 import argparse
 
@@ -8,6 +8,12 @@ BAUD_RATES = ["9600", "38400", "115200", "460800", "921600"] # Baudrates to try
 MON_VER_MSG = UBXMessage(b'\x0a', b'\x04', 2).serialize() # MON-VER poll hex B5 62 0A 04 00 00 0E 34
 
 coordinates = [] # Empty list for storing lat & lon values
+
+def emit_msg(socket, event, data):
+    try:
+        socket.emit(event, data)
+    except Exception as e:
+        print(f"Something went wrong: {e}")
 
 # Get a list of serial ports available on the system 
 def list_available_serial_ports():
@@ -55,7 +61,7 @@ def auto_connect_receiver(socketio=None):
                     print("Attempt: " + str(attempt+1))
                     try:
                         if socketio: # Send logs to the client if there is an open socket
-                            socketio.emit("connection_log", {
+                            emit_msg(socketio, "connection_log", {
                                 'serial_port': port.device,
                                 'baudrate': baudrate,
                                 'attempt': attempt+1
@@ -75,7 +81,7 @@ def auto_connect_receiver(socketio=None):
                             print("Success! Receiver available!")
                             print(f"Serial port: {serial_port}, Baudrate: {baudrate}, Stream: {stream}")
                             if socketio: # Tell the client the great news that there is a connection!!
-                                socketio.emit("rx_connected", {
+                                emit_msg(socketio, "rx_connected", {
                                     'serial_port': serial_port,
                                     'baudrate': baudrate,
                                     'stream': str(stream),
@@ -104,6 +110,7 @@ def auto_connect_receiver(socketio=None):
                 
                 if hope == False: # No hope :(, breaking attempts and baudrate iterations until there is hope again...)
                     break
+        print("No receiver detected...")
 
     except Exception as e:            
         tb = traceback.format_exc()
@@ -199,7 +206,32 @@ def log_rx_output(stream, socketio = None):
         if socketio:
             socketio.emit('log_rx_output', {'data': str(parsed_data)})
 
+def enable_nav_pvt_message(stream, socketio = None):
+    LAYERS = [SET_LAYER_RAM, SET_LAYER_BBR, SET_LAYER_FLASH]
+    INTERFACES = ["UART1", "UART2", "USB"]
+    transaction = TXN_NONE
+    cfgData = [("CFG_MSGOUT_UBX_NAV_PVT_USB", 1)]
+    try:
+        # For every layer    
+        for layer in LAYERS:
+            # For each interface
+            for interface in INTERFACES:
+                cfgData = [(f"CFG_MSGOUT_UBX_NAV_PVT_{interface}", 1)]
+                msg = UBXMessage.config_set(layer, transaction, cfgData)
+                if socketio:
+                    emit_msg(socketio, log_rx_output, msg)
+                print(msg)
+                stream.write(msg.serialize())
+    except Exception as e:
+        tb = traceback.format_exc()
+        print(f"Something went wrong: {e}")
+        print(tb)
+        if socketio:
+            emit_msg(socketio, log_rx_output, tb)
+
+
 if __name__ == "__main__":
-    print('Script only exectution')
+    print('Script only execution')
     stream = auto_connect_receiver()[2]
-    log_rx_output(stream)
+    #log_rx_output(stream)
+    enable_nav_pvt_message(stream)
