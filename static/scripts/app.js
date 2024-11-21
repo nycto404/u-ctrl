@@ -217,6 +217,9 @@ $(document).ready(function() {
     $('#autoconnect-button').click(function(){
         autoConnectReceiver();
     });
+    $('#connect-button').click(function(){
+        connectReceiver();
+    });
     $('#disconnect-button').click(function(){
         disconnectRx();
     });
