@@ -1,6 +1,7 @@
 from flask import Flask, render_template, jsonify, request
 from flask_socketio import SocketIO, send, emit
-import lib.ubxlib as ubxlib
+import library.ubxlib as ubxlib
+from eventlet import wsgi
 import uuid
 
 stream = None # Initialize data stream variable
@@ -120,4 +121,6 @@ def handle_message(data):
 
     
 if __name__ == '__main__':
-    socketio.run(app, port=8080)
+    import eventlet # type: ignore
+    wsgi.server(eventlet.listen(("0.0.0.0", 5001)), app)
+    #socketio.run(app, port=8080)

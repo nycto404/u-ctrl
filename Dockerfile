@@ -11,7 +11,7 @@ COPY . /app
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Expose the application's port
-EXPOSE 5000
+EXPOSE 5001
 
 # Start the app with Gunicorn
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "wsgi:app"]
+CMD ["python3", "app/main.py"]
