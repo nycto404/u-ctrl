@@ -130,7 +130,7 @@ socket.on('rx_connection_status', function(data) {
         }
         localStorage.setItem('connection_details', data['stream']);
         monVer();
-        setTimeout(logRxOutput, 1500)
+        // setTimeout(logRxOutput, 1500)
     } else {
         $(".connection-status").css({
             "background-color": "#e3103a"
