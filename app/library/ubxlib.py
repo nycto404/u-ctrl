@@ -2,7 +2,7 @@ import serial.tools.list_ports, logging, time, traceback
 from serial import Serial
 from pyubx2 import UBXReader, UBXMessage, NMEA_PROTOCOL, UBX_PROTOCOL, SET_LAYER_RAM, SET_LAYER_FLASH, SET_LAYER_BBR, TXN_NONE
 from flask_socketio import SocketIO, emit
-import argparse
+import argparse, threading
 
 BAUD_RATES = ["9600", "38400", "115200", "460800", "921600"] # Baudrates to try
 MON_VER_MSG = UBXMessage(b'\x0a', b'\x04', 2).serialize() # MON-VER poll hex B5 62 0A 04 00 00 0E 34
@@ -183,32 +183,39 @@ def poll_mon_ver(stream):
         #print(parsed_data.extension_07.decode())
         return payload
   
-def log_rx_output(stream, socketio = None):
+def log_rx_output(stream, socketio = None, is_logging = None):
+    print('ubxlib.py:log_rx_output')
+    print(f'Stream: {stream}')
+    print(f'Socket: {socketio}')
     ubr = UBXReader(stream, protfilter=NMEA_PROTOCOL | UBX_PROTOCOL)
-    while stream:
-        raw_data, parsed_data = ubr.read()
-        print(raw_data)
-        print(parsed_data)
+    while is_logging():
+        try:
+            raw_data, parsed_data = ubr.read()
+            print(raw_data)
+            print(parsed_data)
 
-        # IF NAV-PVT is found, create dictionary for easy handling on client side
-        if 'PVT' in str(parsed_data):
-            pvt_data = {
-                        'iTOW': parsed_data.iTOW,
-                        'year': parsed_data.year,
-                        'month': parsed_data.month,
-                        'day': parsed_data.day,
-                        'fix_type': parsed_data.fixType,
-                        'lat': parsed_data.lat,
-                        'lon': parsed_data.lon,
-                        'height': parsed_data.height,
-                        'speed': parsed_data.gSpeed
-            }
-            print(f'NAV-PVT data: {pvt_data}')
+            # IF NAV-PVT is found, create dictionary for easy handling on client side
+            if 'PVT' in str(parsed_data):
+                pvt_data = {
+                            'iTOW': parsed_data.iTOW,
+                            'year': parsed_data.year,
+                            'month': parsed_data.month,
+                            'day': parsed_data.day,
+                            'fix_type': parsed_data.fixType,
+                            'lat': parsed_data.lat,
+                            'lon': parsed_data.lon,
+                            'height': parsed_data.height,
+                            'speed': parsed_data.gSpeed
+                }
+                print(f'NAV-PVT data: {pvt_data}')
+                if socketio:
+                    socketio.emit('nav-pvt', {'data': pvt_data})            
+
             if socketio:
-                socketio.emit('nav-pvt', {'data': pvt_data})            
-
-        if socketio:
-            socketio.emit('log_rx_output', {'data': str(parsed_data)})
+                socketio.emit('log_rx_output', {'data': str(parsed_data)})
+        except Exception as e:
+            print(f"Error reading from stream: {e}")
+            break
 
 def enable_nav_pvt_message(stream, socketio = None):
     LAYERS = [SET_LAYER_RAM, SET_LAYER_BBR, SET_LAYER_FLASH]
@@ -237,5 +244,5 @@ def enable_nav_pvt_message(stream, socketio = None):
 if __name__ == "__main__":
     print('Script only execution')
     stream = auto_connect_receiver()[2]
-    #log_rx_output(stream)
-    enable_nav_pvt_message(stream)
+    log_rx_output(stream)
+    #enable_nav_pvt_message(stream)

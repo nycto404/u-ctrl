@@ -1,3 +1,12 @@
+/*
+Code is executed after the page is loaded. Process flow:
+
+1.) listSerialPorts() Client -> list_serial_ports Server; Gets the available serial ports and stores them on the client
+2.) isRxConnected(); Client -> is_rx_connected Server; Checks if there is a global variable for the stream
+
+*/
+
+
 console.log('app.js');
 
 const serialPortSelect = document.getElementById('serial-port-select');
@@ -15,6 +24,10 @@ const logs = document.getElementById('logs');
 
 let clientId = sessionStorage.getItem('clientId');
 
+if (!localStorage.getItem('is_logging')) {
+    localStorage.setItem('is_logging', false);
+}
+
 if (!clientId) {
     clientId = Math.random().toString(36).substring(2); // Unique ID
     sessionStorage.setItem('clientId', clientId);
@@ -22,9 +35,9 @@ if (!clientId) {
 
 let socket = io();
 
-socket.on('connect', function() {
-    socket.emit('register_client', {clientId: clientId});
-});
+// socket.on('connect', function() {
+//     socket.emit('register_client', {clientId: clientId});
+// });
 
 // socket.on('disconnect', function() {
 //     socket.emit('unregister_client', {clientId: clientId});
@@ -109,15 +122,17 @@ let clearLog = () => {
     $('.log-container p').remove();
 }
 
-function isRxConnected() {
+let isRxConnected = () => {
     console.log('isRxConnected');
     socket.emit('is_rx_connected');
 }
 
 socket.on('rx_connection_status', function(data) {
+    console.log('rx_connection_status');
     console.log('rx_connection_status: ', data);
     console.log('rx_connected: ', data['rx_connected']);
     if (data['rx_connected'] == true) {
+        rxConnected = true;
         $(".connection-status").css({
             "background-color": "#1adb61"
         });
@@ -129,9 +144,14 @@ socket.on('rx_connection_status', function(data) {
             $('.connection-status').attr('title', data['stream']);
         }
         localStorage.setItem('connection_details', data['stream']);
+        if (data['is_logging'] == true) {
+            localStorage.setItem('is_logging', true);
+        } else {
+            localStorage.setItem('is_logging', false);
+        }
         monVer();
-        // setTimeout(logRxOutput, 1500)
     } else {
+        rxConnected = false;
         $(".connection-status").css({
             "background-color": "#e3103a"
         });
@@ -174,11 +194,6 @@ let logRxOutput = () => {
     socket.emit('log_rx_output');
 }
 
-let enableNavPvt = () => {
-    console.log('enableNavPvt');
-    socket.emit('enable_nav_pvt');
-}
-
 socket.on('log_rx_output', function(data) {
     const maxLogLength = 100;
     console.log('log_rx_output');
@@ -193,6 +208,11 @@ socket.on('log_rx_output', function(data) {
     console.log('Length of log container: ', logs.children.length)
 })
 
+let enableNavPvt = () => {
+    console.log('enableNavPvt');
+    socket.emit('enable_nav_pvt');
+}
+
 socket.on('nav-pvt', function(data) {
     $('.nav-pvt-data-table td').remove()
     console.log('nav-pvt');
@@ -204,8 +224,27 @@ socket.on('nav-pvt', function(data) {
     marker.setLatLng([data['data']['lat'], data['data']['lon']]);
 })
 
+let toggleRxOutput = () => {
+    console.log('toggleRxOutput');
+    if (rxConnected){
+        if (localStorage.getItem('is_logging') == 'false') {
+            console.log('Rx output will be activated...');
+            localStorage.setItem('is_logging', 'true');
+            rxLogging = true;
+            socket.emit('show_rx_output');
+        }   else {
+            console.log('Rx output will be deactivated...');
+            localStorage.setItem('is_logging', 'false');
+            rxLogging = false;
+            socket.emit('hide_rx_output');
+        }
+    } else {
+        alert('No receiver connected...');
+    }
+}
+
 listSerialPorts();
-isRxConnected();
+let rxConnected = isRxConnected();
 
 lastSuccessfulConnectionDetails.textContent = localStorage.getItem('connection_details');
 $('.connection-status').attr('title', localStorage.getItem('connection_details'));
@@ -235,14 +274,8 @@ $(document).ready(function() {
     $('#enable-nav-pvt-button').click(function(){
         enableNavPvt();
     });
+    $('#toggle-rx-output').click(function(){
+        toggleRxOutput();
+    });
+
 })
-
-
-
-// autoConnectButton.addEventListener("click", autoConnectReceiver);
-// disconnectButton.addEventListener("click", disconnectRx);
-// clearLogButton.addEventListener("click", clearLog);
-// testButton.addEventListener("click", sendMessage);
-// connectButton.addEventListener("click", connectReceiver);
-// monVerButton.addEventListener("click", monVer);
-// enableNavPvtButton.addEventListener("click", enableNavPvt);

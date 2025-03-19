@@ -3,11 +3,13 @@ from flask_socketio import SocketIO, send, emit
 import library.ubxlib as ubxlib
 # from eventlet import wsgi
 import uuid
+import threading
 
 stream = None # Initialize data stream variable
 clients = {}
 rx_connected = False # 
 is_logging = False # To avoid creating several UBXReader instances when rx_logging is triggere, not a good solution though
+logging_thread = None
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
@@ -31,10 +33,10 @@ def register_client(data):
     print(clients)
 
 @socketio.on('disconnect')
-def unregister_client(data):
+def unregister_client():
     print('unregister_client')
-    clients.pop(data['client_id'])
-    print(clients)
+    #clients.pop(data['client_id'])
+    #print(clients)
 
 
 @socketio.on('list_serial_ports')
@@ -62,27 +64,32 @@ def connect(data):
 
 @socketio.on('is_rx_connected')
 def is_rx_connected():
-    global stream, rx_connected
+    print('is_rx_connected')
+    global stream, rx_connected, is_logging
+    print(stream)
     if stream:
         rx_connected = True
     else:
         rx_connected = False
     emit('rx_connection_status', {
                                 'rx_connected': rx_connected,
-                                'stream': str(stream)
-                                })
+                                'stream': str(stream),
+                                'is_logging': is_logging
+                                })    
                                 
 @socketio.on('disconnect_rx')
 def disconnect_rx():
     print('disconnect_rx')
-    global stream, is_logging
-    print(stream)
+    global stream, rx_connected
+    hide_rx_output()
+    print(f"Stream before closing: {stream}")
     if stream:
         print('Closing stream...')
         stream.close()
         stream = None
-        is_logging = False
-    is_rx_connected()
+        rx_connected = False
+        print(f"Stream after closing: {stream}")
+    is_rx_connected()  # Ensure rx_connection_status is emitted after disconnecting
 
 @socketio.on('mon_ver')
 def mon_ver():
@@ -92,13 +99,26 @@ def mon_ver():
         payload = ubxlib.poll_mon_ver(stream)
         emit('mon-ver', {'data': payload})
 
-@socketio.on('log_rx_output')
-def log_rx_output():
-    global is_logging
-    if is_logging == False:
-        print('log_rx_output')
+@socketio.on('show_rx_output')
+def show_rx_output():
+    print('show_rx_output')
+    global logging_thread, is_logging
+    if not is_logging:
         is_logging = True
-        ubxlib.log_rx_output(stream, socketio)
+        logging_thread = threading.Thread(target=ubxlib.log_rx_output, args=[stream, socketio, lambda: is_logging])
+        print(logging_thread)
+        logging_thread.start()
+
+@socketio.on('hide_rx_output')
+def hide_rx_output():
+    print('hide_rx_output')
+    global logging_thread, is_logging
+    if is_logging:
+        is_logging = False
+        logging_thread.join()
+        logging_thread = None
+        print(f"Logging thread after join: {logging_thread}")
+    is_rx_connected()  # Add this line to emit the rx_connection_status event
 
 @socketio.on('enable_nav_pvt')
 def enable_nav_pvt():
@@ -106,21 +126,10 @@ def enable_nav_pvt():
     ubxlib.enable_nav_pvt_message(stream, socketio)
     print('enable_nav_pvt')
 
-
-
-
-
-
-
-
-
 @socketio.on('message')
 def handle_message(data):
     print('received message: ' + data['data'][0])
     emit('message_response', {'data': 'Message was received by the server!'})
 
-    
 if __name__ == '__main__':
-    # import eventlet # type: ignore
-    # wsgi.server(eventlet.listen(("0.0.0.0", 5001)), app)
     socketio.run(app, debug=True)
