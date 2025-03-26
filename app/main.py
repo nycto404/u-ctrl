@@ -105,9 +105,12 @@ def show_rx_output():
     global logging_thread, is_logging
     if not is_logging:
         is_logging = True
-        logging_thread = threading.Thread(target=ubxlib.log_rx_output, args=[stream, socketio, lambda: is_logging])
-        print(logging_thread)
-        logging_thread.start()
+        # socketio.start_background_task(ubxlib.log_rx_output, stream, socketio, lambda: is_logging)
+        socketio.start_background_task(target=ubxlib.log_rx_output, stream=stream, socketio=socketio, is_logging=lambda: is_logging)
+
+        # logging_thread = threading.Thread(target=ubxlib.log_rx_output, args=[stream, socketio, lambda: is_logging])
+        # print(logging_thread)
+        # logging_thread.start()
 
 @socketio.on('hide_rx_output')
 def hide_rx_output():
@@ -115,8 +118,8 @@ def hide_rx_output():
     global logging_thread, is_logging
     if is_logging:
         is_logging = False
-        logging_thread.join()
-        logging_thread = None
+        # logging_thread.join()
+        # logging_thread = None
         print(f"Logging thread after join: {logging_thread}")
     is_rx_connected()  # Add this line to emit the rx_connection_status event
 

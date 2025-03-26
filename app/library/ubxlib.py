@@ -209,10 +209,16 @@ def log_rx_output(stream, socketio = None, is_logging = None):
                 }
                 print(f'NAV-PVT data: {pvt_data}')
                 if socketio:
-                    socketio.emit('nav-pvt', {'data': pvt_data})            
+                    print('Emitting NAV-PVT data...')
+                    socketio.emit('nav-pvt', {'data': pvt_data})   
+                    socketio.sleep(0)  # ✅ Prevents blocking         
 
             if socketio:
+                print("Socketio: ", socketio)
+                print('Emitting log_rx_output...')
                 socketio.emit('log_rx_output', {'data': str(parsed_data)})
+                socketio.sleep(0)  # ✅ Prevents blocking
+
         except Exception as e:
             print(f"Error reading from stream: {e}")
             break

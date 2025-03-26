@@ -5,21 +5,16 @@ Code is executed after the page is loaded. Process flow:
 2.) isRxConnected(); Client -> is_rx_connected Server; Checks if there is a global variable for the stream
 
 */
-
-
 console.log('app.js');
 
 const serialPortSelect = document.getElementById('serial-port-select');
 const baudrateSelect = document.getElementById('baudrate-select');
-
 const lastSuccessfulConnectionDetails = document.getElementById('last-successful-connection-details');
-
 const receiverInfo = document.getElementById('receiver-info');
 const monVerTable = document.getElementById('mon-ver-table');
 const softwareVersion = document.getElementById('software-version');
 const hardwareVersion = document.getElementById('hardware-version');
 const extensions = document.getElementById('extensions');
-
 const logs = document.getElementById('logs');
 
 let clientId = sessionStorage.getItem('clientId');
@@ -42,6 +37,10 @@ let socket = io();
 // socket.on('disconnect', function() {
 //     socket.emit('unregister_client', {clientId: clientId});
 // });
+
+socket.on('test', function(data) {
+    console.log('Test: ', data);
+})
 
 let listSerialPorts = () => {
     console.log('listSerialPorts');
@@ -188,11 +187,6 @@ socket.on('mon-ver', function(data) {
         }
     }
 })
-
-let logRxOutput = () => {
-    console.log('logRxOutput');
-    socket.emit('log_rx_output');
-}
 
 socket.on('log_rx_output', function(data) {
     const maxLogLength = 100;
