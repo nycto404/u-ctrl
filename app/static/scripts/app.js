@@ -42,26 +42,51 @@ socket.on('test', function(data) {
     console.log('Test: ', data);
 })
 
+// Request the available serial ports from the server
 let listSerialPorts = () => {
     console.log('listSerialPorts');
     socket.emit('list_serial_ports');
 }
+
+// Handle the serial ports receiver from the server
 socket.on('available_serial_ports', function(data) {
     console.log('Avilable serial ports: ', data);
     console.log('Avilable serial ports: ', typeof(data));
-    let newLogEntry = document.createElement('p');
-    newLogEntry.textContent = data;
-    logs.appendChild(newLogEntry);
-    console.log(serialPortSelect.options.length);
-    if (serialPortSelect.options.length == 1) {
-        for (let serialPort in data) {
+    let newLogEntry = document.createElement('p'); // New log element
+    newLogEntry.textContent = data; // Show the serial ports
+    logs.appendChild(newLogEntry); // Append element to 'logs' container
+    console.log(serialPortSelect.options.length); // How many elements in the dropdown?
+    if (serialPortSelect.options.length == 1) { // If there is only the default element ('Serial Port')
+        for (let serialPort in data) { //create options for every serial port
             let newSerialPortOption = document.createElement('option');
-            newSerialPortOption.value = data[serialPort];
+            newSerialPortOption.value = data[serialPort]; 
             newSerialPortOption.text = data[serialPort];
-            serialPortSelect.appendChild(newSerialPortOption);
+            serialPortSelect.appendChild(newSerialPortOption); // Append the new element to the 'selects' element
         }
     }
+    if (localStorage.getItem('connection_details')) { // If connections details from the last connection have been saved to the localstorage, then call setLatestConnectionInfo()
+        setLatestConnectionInfo()
+    }
 })
+
+// Get latest connection info and populate the dropdown with it
+let setLatestConnectionInfo = () => {
+    console.log('setLatestConnectionInfo')
+    let latestConnectionInfos = localStorage.getItem('connection_details');
+    lastSuccessfulConnectionDetails.textContent = latestConnectionInfos;
+    console.log(typeof(latestConnectionInfos));
+    console.log(latestConnectionInfos);
+    if (latestConnectionInfos) {
+        const parsedInfo = latestConnectionInfos.match(/port='(.*?)'.*?baudrate=(\d+)/); // Parse connection details string with regex
+        const port = parsedInfo[1];
+        const baudrate = parsedInfo[2];
+        console.log(port, baudrate);
+        console.log(serialPortSelect.value);
+        console.log(serialPortSelect.options);
+        serialPortSelect.value = port;
+        baudrateSelect.value = baudrate;
+    }
+}
 
 let sendMessage = () => {
     console.log('sendMessage');
@@ -237,10 +262,12 @@ let toggleRxOutput = () => {
     }
 }
 
+
+
 listSerialPorts();
 let rxConnected = isRxConnected();
 
-lastSuccessfulConnectionDetails.textContent = localStorage.getItem('connection_details');
+
 $('.connection-status').attr('title', localStorage.getItem('connection_details'));
 
 $(document).ready(function() {

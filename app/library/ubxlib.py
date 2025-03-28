@@ -43,9 +43,7 @@ def auto_connect_receiver(socketio=None):
     Try the found serial ports with different baudrates by polling the MON-VER UBX message and check if "ROM BASE" is in th reply.
     Also listening for any '$G' (beginning of NMEA protocol) in the stream.
     '''
-    
     hope = False # Variable to determine if it worth to do further conenction and listening attempts. I.e. if access is denied, no hope to try other baudrates...
-
     try:
         # Getting the available serial ports
         ports = list_available_serial_ports()
