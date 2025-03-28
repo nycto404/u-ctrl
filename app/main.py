@@ -96,7 +96,7 @@ def mon_ver():
     print('mon_ver')
     global is_logging
     if is_logging == False:
-        payload = ubxlib.poll_mon_ver(stream)
+        payload = ubxlib.poll_mon_ver(stream, socketio)
         emit('mon-ver', {'data': payload})
 
 @socketio.on('show_rx_output')

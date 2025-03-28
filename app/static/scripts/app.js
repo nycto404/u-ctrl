@@ -73,7 +73,7 @@ socket.on('available_serial_ports', function(data) {
 let setLatestConnectionInfo = () => {
     console.log('setLatestConnectionInfo')
     let latestConnectionInfos = localStorage.getItem('connection_details');
-    lastSuccessfulConnectionDetails.textContent = latestConnectionInfos;
+    // lastSuccessfulConnectionDetails.textContent = latestConnectionInfos;
     console.log(typeof(latestConnectionInfos));
     console.log(latestConnectionInfos);
     if (latestConnectionInfos) {

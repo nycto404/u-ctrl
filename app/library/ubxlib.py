@@ -151,7 +151,7 @@ def connect_receiver(serial_port, baudrate, socketio=None):
         if "Access is denied" in str(e) or "semaphore timeout" in str(e):
             return
 
-def poll_mon_ver(stream):
+def poll_mon_ver(stream, socketio=None):
     payload = []
     ubr = UBXReader(stream, protfilter=NMEA_PROTOCOL | UBX_PROTOCOL)
     while True:
@@ -179,6 +179,9 @@ def poll_mon_ver(stream):
         print(parsed_data.extension_05.decode())
         print(parsed_data.extension_06.decode())
         #print(parsed_data.extension_07.decode())
+        if (socketio):
+            socketio.emit("log_rx_output", {
+                "data": payload})
         return payload
   
 def log_rx_output(stream, socketio = None, is_logging = None):
