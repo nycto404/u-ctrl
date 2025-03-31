@@ -94,7 +94,7 @@ a {
 .controls {
     width: 100%;
     display: grid;
-    grid-template-columns: auto  auto auto;
+    grid-template-columns: auto auto auto;
     column-gap: 20px;
 }
 

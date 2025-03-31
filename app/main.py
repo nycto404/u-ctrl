@@ -9,7 +9,6 @@ stream = None # Initialize data stream variable
 clients = {}
 rx_connected = False # 
 is_logging = False # To avoid creating several UBXReader instances when rx_logging is triggere, not a good solution though
-logging_thread = None
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
@@ -102,7 +101,7 @@ def mon_ver():
 @socketio.on('show_rx_output')
 def show_rx_output():
     print('show_rx_output')
-    global logging_thread, is_logging
+    global is_logging
     if not is_logging:
         is_logging = True
         socketio.start_background_task(target=ubxlib.log_rx_output, stream=stream, socketio=socketio, is_logging=lambda: is_logging)
@@ -110,7 +109,7 @@ def show_rx_output():
 @socketio.on('hide_rx_output')
 def hide_rx_output():
     print('hide_rx_output')
-    global logging_thread, is_logging
+    global is_logging
     if is_logging:
         is_logging = False
     is_rx_connected()  # Add this line to emit the rx_connection_status event
