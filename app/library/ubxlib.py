@@ -51,9 +51,12 @@ def auto_connect_receiver(socketio=None):
         #logging.info("Trying to connect to UBX receiver...")
         print("Trying to connect to receiver...")
         for port in ports[0]: # Loop through serial ports
+            if ("Bluetooth" in port.description): # If virtual serial port for BLuetooth, skip the port 
+                continue
             for baudrate in BAUD_RATES: # Loop through baudrates
                 #logging.info(port.device + " at " + baudrate)
                 print(port.device + " at " + baudrate)
+                print(port.description)
                 for attempt in range(3): # Trying 3 times
                     #logging.info("Attempt: " + str(attempt+1))
                     print("Attempt: " + str(attempt+1))
@@ -66,6 +69,7 @@ def auto_connect_receiver(socketio=None):
                             })
                         stream = Serial(port.device, timeout=0.5, baudrate=baudrate) # Opening serial conn.
                         #logging.info("Sending MON-VER: " + str(MON_VER_MSG))
+                        time.sleep(0.5)
                         stream.write(MON_VER_MSG) # Sending the MON-VER msg to the stream
                         time.sleep(0.1)
                         response = stream.read(1024) # Read 1024 bytes from the stream
