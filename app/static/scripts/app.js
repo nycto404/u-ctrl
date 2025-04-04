@@ -232,6 +232,12 @@ let enableNavPvt = () => {
     socket.emit('enable_nav_pvt');
 }
 
+let enableUsefulMsgs = () => {
+    console.log('enableUsefulMsgs');
+    socket.emit('enable_useful_msgs');
+}
+
+
 socket.on('nav-pvt', function(data) {
     $('.nav-pvt-data-table td').remove()
     console.log('nav-pvt');
@@ -298,5 +304,9 @@ $(document).ready(function() {
     $('#toggle-rx-output').click(function(){
         toggleRxOutput();
     });
+    $('#enable-useful-msgs-button').click(function(){
+        enableUsefulMsgs();
+    });
+
 
 })

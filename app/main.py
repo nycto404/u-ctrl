@@ -120,6 +120,13 @@ def enable_nav_pvt():
     ubxlib.enable_nav_pvt_message(stream, socketio)
     print('enable_nav_pvt')
 
+@socketio.on('enable_useful_msgs')
+def enable_useful_msgs():
+    global stream
+    ubxlib.enable_useful_msgs(stream, socketio)
+    print('enable_useful_msgs')
+
+
 @socketio.on('message')
 def handle_message(data):
     print('received message: ' + data['data'][0])

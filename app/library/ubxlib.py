@@ -6,7 +6,8 @@ import argparse, threading
 
 BAUD_RATES = ["9600", "38400", "115200", "460800", "921600"] # Baudrates to try
 MON_VER_MSG = UBXMessage(b'\x0a', b'\x04', 2).serialize() # MON-VER poll hex B5 62 0A 04 00 00 0E 34
-
+# USEFUL_MSGS = ["ACK_ACK", "ACK_NAK", "ESF_MEAS", "ESF_STATUS", "MON_COMMS", "MON_HW", "MON_HW3", "MON_IO", "MON_MSGPP", "MON_RF", "MON_RXBUF", "MON_SPAN", "MON_SYS", "MON_TEMP", "MON_TXBUF", "NAV_PVT",  "NAV_SAT", "NAV_SBAS", "NAV_SIG", "RXM_COR"]
+USEFUL_MSGS = ["ESF_MEAS", "ESF_STATUS", "MON_COMMS", "MON_HW", "MON_HW3", "MON_IO", "MON_MSGPP", "MON_RF", "MON_RXBUF", "MON_SPAN", "MON_SYS", "MON_TEMP", "MON_TXBUF", "NAV_PVT",  "NAV_SAT", "NAV_SBAS", "NAV_SIG", "RXM_COR"]
 coordinates = [] # Empty list for storing lat & lon values
 
 # Get a list of serial ports available on the system 
@@ -81,6 +82,7 @@ def auto_connect_receiver(socketio=None):
                                     'baudrate': baudrate,
                                     'stream': str(stream)
                                     })
+                                time.sleep(0)
                             return [serial_port, baudrate, stream]
                         
                         # If received data length is less or equal one byte, abort the attempt
@@ -138,6 +140,7 @@ def connect_receiver(serial_port, baudrate, socketio=None):
                         'baudrate': baudrate,
                         'stream': str(stream),
                         })
+                    time.sleep(0)
                 return [serial_port, baudrate, stream]
             else:
                 stream.close()
@@ -179,6 +182,7 @@ def poll_mon_ver(stream, socketio=None):
         if (socketio):
             socketio.emit("log_rx_output", {
                 "data": payload})
+            time.sleep(0)
         return payload
   
 def log_rx_output(stream, socketio = None, is_logging = None):
@@ -225,7 +229,6 @@ def enable_nav_pvt_message(stream, socketio = None):
     LAYERS = [SET_LAYER_RAM, SET_LAYER_BBR, SET_LAYER_FLASH]
     INTERFACES = ["UART1", "UART2", "USB"]
     transaction = TXN_NONE
-    cfgData = [("CFG_MSGOUT_UBX_NAV_PVT_USB", 1)]
     try:
         # For every layer    
         for layer in LAYERS:
@@ -245,6 +248,35 @@ def enable_nav_pvt_message(stream, socketio = None):
         if socketio:
             socketio.emit("log_rx_output", {'data': str(tb)})
             time.sleep(0)
+
+def enable_useful_msgs(stream, socketio=None):
+    LAYERS = [SET_LAYER_RAM, SET_LAYER_BBR, SET_LAYER_FLASH]
+    INTERFACES = ["UART1", "UART2", "USB"]
+    transaction = TXN_NONE
+    try:
+        # For every layer    
+        for layer in LAYERS:
+            # For each interface
+            for msg in USEFUL_MSGS:
+                print(f"Enabling {msg}")
+                for interface in INTERFACES:
+                    cfgData = [(f"CFG_MSGOUT_UBX_{msg}_{interface}", 1)]
+                    print(cfgData)
+                    msg = UBXMessage.config_set(layer, transaction, cfgData)
+                    if socketio:
+                        socketio.emit("log_rx_output", {'data': str(msg)})
+                        time.sleep(0)
+                    print(msg)
+                    stream.write(msg.serialize())
+    except Exception as e:
+        tb = traceback.format_exc()
+        print(f"Something went wrong: {e}")
+        print(tb)
+        if socketio:
+            socketio.emit("log_rx_output", {'data': str(tb)})
+            time.sleep(0)
+
+
 
 if __name__ == "__main__":
     print('Script only execution')
