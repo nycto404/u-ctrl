@@ -9,12 +9,6 @@ MON_VER_MSG = UBXMessage(b'\x0a', b'\x04', 2).serialize() # MON-VER poll hex B5 
 
 coordinates = [] # Empty list for storing lat & lon values
 
-def emit_msg(socket, event, data):
-    try:
-        socket.emit(event, data)
-    except Exception as e:
-        print(f"Something went wrong: {e}")
-
 # Get a list of serial ports available on the system 
 def list_available_serial_ports():
     ''' Get available serial ports '''
@@ -36,8 +30,6 @@ def list_available_serial_ports():
         print(e)
         return str(e)
     
-
-
 def auto_connect_receiver(socketio=None):
     '''
     Try the found serial ports with different baudrates by polling the MON-VER UBX message and check if "ROM BASE" is in th reply.
@@ -61,12 +53,13 @@ def auto_connect_receiver(socketio=None):
                     #logging.info("Attempt: " + str(attempt+1))
                     print("Attempt: " + str(attempt+1))
                     try:
-                        if socketio: # Send logs to the client if there is an open socket
-                            emit_msg(socketio, "connection_log", {
+                        if (socketio):
+                            socketio.emit("connection_log", {
                                 'serial_port': port.device,
                                 'baudrate': baudrate,
                                 'attempt': attempt+1
                             })
+                            time.sleep(0)
                         stream = Serial(port.device, timeout=0.5, baudrate=baudrate) # Opening serial conn.
                         #logging.info("Sending MON-VER: " + str(MON_VER_MSG))
                         time.sleep(0.5)
@@ -83,10 +76,10 @@ def auto_connect_receiver(socketio=None):
                             print("Success! Receiver available!")
                             print(f"Serial port: {serial_port}, Baudrate: {baudrate}, Stream: {stream}")
                             if socketio: # Tell the client the great news that there is a connection!!
-                                emit_msg(socketio, "rx_connected", {
+                                socketio.emit("rx_connected", {
                                     'serial_port': serial_port,
                                     'baudrate': baudrate,
-                                    'stream': str(stream),
+                                    'stream': str(stream)
                                     })
                             return [serial_port, baudrate, stream]
                         
@@ -241,7 +234,8 @@ def enable_nav_pvt_message(stream, socketio = None):
                 cfgData = [(f"CFG_MSGOUT_UBX_NAV_PVT_{interface}", 1)]
                 msg = UBXMessage.config_set(layer, transaction, cfgData)
                 if socketio:
-                    emit_msg(socketio, log_rx_output, msg)
+                    socketio.emit("log_rx_output", {'data': str(msg)})
+                    time.sleep(0)
                 print(msg)
                 stream.write(msg.serialize())
     except Exception as e:
@@ -249,8 +243,8 @@ def enable_nav_pvt_message(stream, socketio = None):
         print(f"Something went wrong: {e}")
         print(tb)
         if socketio:
-            emit_msg(socketio, log_rx_output, tb)
-
+            socketio.emit("log_rx_output", {'data': str(tb)})
+            time.sleep(0)
 
 if __name__ == "__main__":
     print('Script only execution')
