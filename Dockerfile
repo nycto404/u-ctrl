@@ -15,11 +15,14 @@ COPY . /app
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Ensure entrypoint is executable
+RUN chmod +x /app/entrypoint.sh || true
+
 # Use environment variable to allow choosing async mode at runtime
 ENV SOCKETIO_ASYNC_MODE=eventlet
 
 # Expose the application's port
 EXPOSE 5001
 
-# Start the app with Gunicorn using eventlet worker suitable for SocketIO
-CMD ["gunicorn", "-k", "eventlet", "-w", "1", "-b", "0.0.0.0:5001", "app.main:app"]
+# Default entrypoint runs gunicorn with configured options
+ENTRYPOINT ["/app/entrypoint.sh"]

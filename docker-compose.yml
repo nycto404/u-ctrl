@@ -1,0 +1,12 @@
+version: '3.8'
+services:
+  app:
+    build: .
+    ports:
+      - "5001:5001"
+    environment:
+      - SOCKETIO_ASYNC_MODE=eventlet
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./:/app:rw
+    restart: unless-stopped
