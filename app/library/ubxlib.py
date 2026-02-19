@@ -1,14 +1,26 @@
-import serial.tools.list_ports, logging, time, traceback
+import serial.tools.list_ports
+import logging
+import time
+import traceback
 from serial import Serial
 from pyubx2 import UBXReader, UBXMessage, NMEA_PROTOCOL, UBX_PROTOCOL, SET_LAYER_RAM, SET_LAYER_FLASH, SET_LAYER_BBR, TXN_NONE
 from flask_socketio import SocketIO, emit
-import argparse, threading
+import argparse
+import threading
+from typing import List, Optional, Tuple, Callable, Any
 
-BAUD_RATES = ["9600", "38400", "115200", "460800", "921600"] # Baudrates to try
-MON_VER_MSG = UBXMessage(b'\x0a', b'\x04', 2).serialize() # MON-VER poll hex B5 62 0A 04 00 00 0E 34
-# USEFUL_MSGS = ["ACK_ACK", "ACK_NAK", "ESF_MEAS", "ESF_STATUS", "MON_COMMS", "MON_HW", "MON_HW3", "MON_IO", "MON_MSGPP", "MON_RF", "MON_RXBUF", "MON_SPAN", "MON_SYS", "MON_TEMP", "MON_TXBUF", "NAV_PVT",  "NAV_SAT", "NAV_SBAS", "NAV_SIG", "RXM_COR"]
-USEFUL_MSGS = ["ESF_MEAS", "ESF_STATUS", "MON_COMMS", "MON_HW", "MON_HW3", "MON_IO", "MON_MSGPP", "MON_RF", "MON_RXBUF", "MON_SPAN", "MON_SYS", "MON_TEMP", "MON_TXBUF", "NAV_PVT",  "NAV_SAT", "NAV_SBAS", "NAV_SIG", "RXM_COR"]
-coordinates = [] # Empty list for storing lat & lon values
+
+LOG = logging.getLogger(__name__)
+LOG.addHandler(logging.NullHandler())
+
+BAUD_RATES = ["9600", "38400", "115200", "460800", "921600"]
+MON_VER_MSG = UBXMessage(b'\x0a', b'\x04', 2).serialize()
+USEFUL_MSGS = [
+    "ESF_MEAS", "ESF_STATUS", "MON_COMMS", "MON_HW", "MON_HW3",
+    "MON_IO", "MON_MSGPP", "MON_RF", "MON_RXBUF", "MON_SPAN",
+    "MON_SYS", "MON_TEMP", "MON_TXBUF", "NAV_PVT", "NAV_SAT",
+    "NAV_SBAS", "NAV_SIG", "RXM_COR",
+]
 
 # Get a list of serial ports available on the system 
 def list_available_serial_ports():
@@ -16,124 +28,96 @@ def list_available_serial_ports():
     try:
         # Get a list of all available ports
         ports = serial.tools.list_ports.comports()
-        serial_ports = []
+        serial_ports: List[str] = []
 
         if ports:
-            print("Available COM Ports:")
+            LOG.info("Available COM Ports: %s", [p.device for p in ports])
             for port in ports:
-                print(port.device)
                 serial_ports.append(port.device)
             return [ports, serial_ports]
         else:
-            print("No COM Ports available.")
-            return "No COM ports available..."
+            LOG.info("No COM Ports available.")
+            return [[], []]
     except Exception as e:
-        print(e)
-        return str(e)
+        LOG.exception("Error listing serial ports")
+        return [[], []]
     
 def auto_connect_receiver(socketio=None):
     '''
     Try the found serial ports with different baudrates by polling the MON-VER UBX message and check if "ROM BASE" is in th reply.
     Also listening for any '$G' (beginning of NMEA protocol) in the stream.
     '''
-    hope = False # Variable to determine if it worth to do further conenction and listening attempts. I.e. if access is denied, no hope to try other baudrates...
+    hope = False
     try:
-        # Getting the available serial ports
         ports = list_available_serial_ports()
-        #logging.basicConfig(filename='receiver_logs/' + timestamp + '.log', level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
-        #logging.info("Trying to connect to UBX receiver...")
-        print("Trying to connect to receiver...")
-        for port in ports[0]: # Loop through serial ports
-            if ("Bluetooth" in port.description): # If virtual serial port for BLuetooth, skip the port 
+        LOG.info("Trying to connect to receiver...")
+        for port in ports[0]:
+            if ("Bluetooth" in getattr(port, 'description', '')):
                 continue
-            for baudrate in BAUD_RATES: # Loop through baudrates
-                #logging.info(port.device + " at " + baudrate)
-                print(port.device + " at " + baudrate)
-                print(port.description)
-                for attempt in range(3): # Trying 3 times
-                    #logging.info("Attempt: " + str(attempt+1))
-                    print("Attempt: " + str(attempt+1))
+            for baudrate in BAUD_RATES:
+                LOG.debug("Trying %s at %s", port.device, baudrate)
+                for attempt in range(3):
+                    LOG.debug("Attempt: %d", attempt + 1)
                     try:
-                        if (socketio):
+                        if socketio:
                             socketio.emit("connection_log", {
                                 'serial_port': port.device,
                                 'baudrate': baudrate,
-                                'attempt': attempt+1
+                                'attempt': attempt + 1
                             })
                             time.sleep(0)
-                        stream = Serial(port.device, timeout=0.5, baudrate=baudrate) # Opening serial conn.
-                        #logging.info("Sending MON-VER: " + str(MON_VER_MSG))
+                        stream = Serial(port.device, timeout=0.5, baudrate=baudrate)
                         time.sleep(0.5)
-                        stream.write(MON_VER_MSG) # Sending the MON-VER msg to the stream
+                        stream.write(MON_VER_MSG)
                         time.sleep(0.1)
-                        response = stream.read(1024) # Read 1024 bytes from the stream
-                        print(str(response))
-                        #logging.info("Response: " + str(response))
+                        response = stream.read(1024)
+                        LOG.debug("Response: %s", response)
 
-                        # Either UBX or NMEA message has been received
-                        if "ROM BASE" in str(response) or "$G" in str(response): # 
+                        if "ROM BASE" in str(response) or "$G" in str(response):
                             serial_port = port.device
-                            #logging.info("UBX message received!")
-                            print("Success! Receiver available!")
-                            print(f"Serial port: {serial_port}, Baudrate: {baudrate}, Stream: {stream}")
-                            if socketio: # Tell the client the great news that there is a connection!!
+                            LOG.info("Success! Receiver available: %s %s", serial_port, baudrate)
+                            if socketio:
                                 socketio.emit("rx_connected", {
                                     'serial_port': serial_port,
                                     'baudrate': baudrate,
                                     'stream': str(stream)
-                                    })
+                                })
                                 time.sleep(0)
                             return [serial_port, baudrate, stream]
-                        
-                        # If received data length is less or equal one byte, abort the attempt
                         elif (len(response) <= 1):
-                            print("No data... Skipping...")
+                            LOG.debug("No data... Skipping...")
                             stream.close()
-                            time.sleep(0.25) # Wait a bit after closing
+                            time.sleep(0.25)
                             break
-
                         else:
-                            #logging.warning("No UBX message received... Closing serial connection...")
-                            hope = True # Set hope to true if some data is received in the stream
-                            print("Only garbage received... Closing serial connection...")
+                            hope = True
+                            LOG.debug("Only garbage received... Closing serial connection...")
                             stream.close()
-                            time.sleep(0.25) # Wait a bit after closing
-                            
+                            time.sleep(0.25)
                     except Exception as e:
-                        print(f"Error: {e}")
+                        LOG.exception("Error during auto_connect attempt")
                         if "Access is denied" in str(e) or "semaphore timeout" in str(e):
-                            hope = False # No hope if access denied or semaphore timeout
+                            hope = False
                             break
-                
-                if hope == False: # No hope :(, breaking attempts and baudrate iterations until there is hope again...)
+                if hope is False:
                     break
-        print("No receiver detected...")
-
-    except Exception as e:            
+        LOG.info("No receiver detected...")
+    except Exception:
         tb = traceback.format_exc()
-        #logging.critical("An exception occured")
-        #logging.critical(f"Error: {e}")
-        #logging.critical("Traceback details:")
-        #logging.critical(tb)
-        print("An exception occured")
-        print(f"Error: {e}")
-        print("Traceback details:")
-        print(tb)
-        print(f"Error: {e}")
+        LOG.exception("An exception occured in auto_connect_receiver: %s", tb)
+    return None
 
 def connect_receiver(serial_port, baudrate, socketio=None):
     try:
         for attempt in range (3): # Try several times
-            print(f'Connection attempt no.: {attempt}')
+            LOG.debug('Connection attempt no.: %s', attempt)
             stream = Serial(serial_port, timeout=1, baudrate=baudrate)
-            stream.write(MON_VER_MSG) # Sending the MON-VER msg to the stream
+            stream.write(MON_VER_MSG)
             time.sleep(0.1)
-            response = stream.read(4096) # Read 2048 bytes from the stream
-            print(str(response))
+            response = stream.read(4096)
+            LOG.debug('Response: %s', response)
             if "ROM BASE" in str(response) or "$G" in str(response):
-                serial_port = serial_port
-                print("Success! Receiver available!")
-                print(f"Serial port: {serial_port}, Baudrate: {baudrate}, Stream: {stream}")
+                LOG.info('Success! Receiver available: %s %s', serial_port, baudrate)
                 if socketio:
                     socketio.emit("rx_connected", {
                         'serial_port': serial_port,
@@ -144,85 +128,69 @@ def connect_receiver(serial_port, baudrate, socketio=None):
                 return [serial_port, baudrate, stream]
             else:
                 stream.close()
-                time.sleep(0.25) # Wait a bit after closing
+                time.sleep(0.25)
 
     except Exception as e:
-        print(f"Error: {e}")
+        LOG.exception('Error connecting to receiver: %s', e)
         if "Access is denied" in str(e) or "semaphore timeout" in str(e):
-            return
+            return None
 
 def poll_mon_ver(stream, socketio=None):
-    payload = []
-    ubr = UBXReader(stream, protfilter=NMEA_PROTOCOL | UBX_PROTOCOL)
-    while True:
-      stream.write(MON_VER_MSG)
-      raw_data, parsed_data = ubr.read()
-      if 'MON-VER' in str(parsed_data):
-        payload.append(parsed_data.swVersion.decode().replace('\x00', ''))
-        payload.append(parsed_data.hwVersion.decode().replace('\x00', ''))
-        payload.append(parsed_data.extension_01.decode().replace('\x00', ''))
-        payload.append(parsed_data.extension_02.decode().replace('\x00', ''))
-        payload.append(parsed_data.extension_03.decode().replace('\x00', ''))
-        payload.append(parsed_data.extension_04.decode().replace('\x00', ''))
-        payload.append(parsed_data.extension_05.decode().replace('\x00', ''))
-        payload.append(parsed_data.extension_06.decode().replace('\x00', ''))
-        #payload.append(parsed_data.extension_07.decode().replace('\x00', ''))
-        print(payload)
-        print(type(parsed_data))
-        print(parsed_data)
-        print(parsed_data.swVersion.decode())
-        print(parsed_data.hwVersion.decode())
-        print(parsed_data.extension_01.decode())
-        print(parsed_data.extension_02.decode())
-        print(parsed_data.extension_03.decode())
-        print(parsed_data.extension_04.decode())
-        print(parsed_data.extension_05.decode())
-        print(parsed_data.extension_06.decode())
-        #print(parsed_data.extension_07.decode())
-        if (socketio):
-            socketio.emit("log_rx_output", {
-                "data": payload})
-            time.sleep(0)
-        return payload
+    payload: List[str] = []
+    try:
+        ubr = UBXReader(stream, protfilter=NMEA_PROTOCOL | UBX_PROTOCOL)
+        while True:
+            stream.write(MON_VER_MSG)
+            raw_data, parsed_data = ubr.read()
+            if 'MON-VER' in str(parsed_data) or getattr(parsed_data, 'identity', '') == 'MON-VER':
+                for fld in ('swVersion', 'hwVersion', 'extension_01', 'extension_02', 'extension_03', 'extension_04', 'extension_05', 'extension_06'):
+                    val = getattr(parsed_data, fld, b'')
+                    try:
+                        payload.append(val.decode().replace('\x00', ''))
+                    except Exception:
+                        payload.append(str(val))
+                LOG.debug('MON-VER payload: %s', payload)
+                if socketio:
+                    socketio.emit('log_rx_output', { 'data': payload })
+                    time.sleep(0)
+                return payload
+    except Exception:
+        LOG.exception('Error polling MON-VER')
+    return []
   
 def log_rx_output(stream, socketio = None, is_logging = None):
-    print('ubxlib.py:log_rx_output')
-    print(f'Stream: {stream}')
-    print(f'Socket: {socketio}')
+    LOG.info('ubxlib.log_rx_output started')
+    LOG.debug('Stream: %s socketio: %s', stream, socketio)
     ubr = UBXReader(stream, protfilter=NMEA_PROTOCOL | UBX_PROTOCOL)
-    while is_logging():
+    while is_logging() if callable(is_logging) else True:
         try:
             raw_data, parsed_data = ubr.read()
-            print(raw_data)
-            print(parsed_data)
+            LOG.debug('raw: %s parsed: %s', raw_data, parsed_data)
 
-            # IF NAV-PVT is found, create dictionary for easy handling on client side
-            if 'PVT' in str(parsed_data):
+            if 'PVT' in str(parsed_data) or getattr(parsed_data, 'identity', '') == 'NAV-PVT':
                 pvt_data = {
-                            'iTOW': parsed_data.iTOW,
-                            'year': parsed_data.year,
-                            'month': parsed_data.month,
-                            'day': parsed_data.day,
-                            'fix_type': parsed_data.fixType,
-                            'lat': parsed_data.lat,
-                            'lon': parsed_data.lon,
-                            'height': parsed_data.height,
-                            'speed': parsed_data.gSpeed
+                    'iTOW': getattr(parsed_data, 'iTOW', None),
+                    'year': getattr(parsed_data, 'year', None),
+                    'month': getattr(parsed_data, 'month', None),
+                    'day': getattr(parsed_data, 'day', None),
+                    'fix_type': getattr(parsed_data, 'fixType', None),
+                    'lat': getattr(parsed_data, 'lat', None),
+                    'lon': getattr(parsed_data, 'lon', None),
+                    'height': getattr(parsed_data, 'height', None),
+                    'speed': getattr(parsed_data, 'gSpeed', None),
                 }
-                print(f'NAV-PVT data: {pvt_data}')
+                LOG.debug('NAV-PVT data: %s', pvt_data)
                 if socketio:
-                    print('Emitting NAV-PVT data...')
-                    socketio.emit('nav-pvt', {'data': pvt_data})   
-                    socketio.sleep(0)  # ✅ Prevents blocking         
+                    LOG.debug('Emitting NAV-PVT data')
+                    socketio.emit('nav-pvt', {'data': pvt_data})
+                    socketio.sleep(0)
 
             if socketio:
-                print("Socketio: ", socketio)
-                print('Emitting log_rx_output...')
                 socketio.emit('log_rx_output', {'data': str(parsed_data)})
-                socketio.sleep(0)  # ✅ Prevents blocking
+                socketio.sleep(0)
 
-        except Exception as e:
-            print(f"Error reading from stream: {e}")
+        except Exception:
+            LOG.exception('Error reading from stream')
             break
 
 def enable_nav_pvt_message(stream, socketio = None):
@@ -230,23 +198,20 @@ def enable_nav_pvt_message(stream, socketio = None):
     INTERFACES = ["UART1", "UART2", "USB"]
     transaction = TXN_NONE
     try:
-        # For every layer    
         for layer in LAYERS:
-            # For each interface
             for interface in INTERFACES:
                 cfgData = [(f"CFG_MSGOUT_UBX_NAV_PVT_{interface}", 1)]
                 msg = UBXMessage.config_set(layer, transaction, cfgData)
                 if socketio:
                     socketio.emit("log_rx_output", {'data': str(msg)})
                     time.sleep(0)
-                print(msg)
+                LOG.debug('Writing message: %s', msg)
                 stream.write(msg.serialize())
-    except Exception as e:
+    except Exception:
         tb = traceback.format_exc()
-        print(f"Something went wrong: {e}")
-        print(tb)
+        LOG.exception('Something went wrong enabling NAV-PVT: %s', tb)
         if socketio:
-            socketio.emit("log_rx_output", {'data': str(tb)})
+            socketio.emit('log_rx_output', {'data': str(tb)})
             time.sleep(0)
 
 def enable_useful_msgs(stream, socketio=None):
@@ -254,26 +219,22 @@ def enable_useful_msgs(stream, socketio=None):
     INTERFACES = ["UART1", "UART2", "USB"]
     transaction = TXN_NONE
     try:
-        # For every layer    
         for layer in LAYERS:
-            # For each interface
-            for msg in USEFUL_MSGS:
-                print(f"Enabling {msg}")
+            for msg_name in USEFUL_MSGS:
+                LOG.debug('Enabling %s', msg_name)
                 for interface in INTERFACES:
-                    cfgData = [(f"CFG_MSGOUT_UBX_{msg}_{interface}", 1)]
-                    print(cfgData)
+                    cfgData = [(f"CFG_MSGOUT_UBX_{msg_name}_{interface}", 1)]
                     msg = UBXMessage.config_set(layer, transaction, cfgData)
                     if socketio:
-                        socketio.emit("log_rx_output", {'data': str(msg)})
+                        socketio.emit('log_rx_output', {'data': str(msg)})
                         time.sleep(0)
-                    print(msg)
+                    LOG.debug('Writing message: %s', msg)
                     stream.write(msg.serialize())
-    except Exception as e:
+    except Exception:
         tb = traceback.format_exc()
-        print(f"Something went wrong: {e}")
-        print(tb)
+        LOG.exception('Something went wrong enabling useful messages: %s', tb)
         if socketio:
-            socketio.emit("log_rx_output", {'data': str(tb)})
+            socketio.emit('log_rx_output', {'data': str(tb)})
             time.sleep(0)
 
 

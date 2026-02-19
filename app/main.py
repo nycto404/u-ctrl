@@ -1,18 +1,18 @@
 from flask import Flask, render_template, jsonify, request
 from flask_socketio import SocketIO, send, emit
 import library.ubxlib as ubxlib
-# from eventlet import wsgi
-import uuid
-import threading
+from server_state import ServerState
+import logging
 
-stream = None # Initialize data stream variable
-clients = {}
-rx_connected = False # 
-is_logging = False # To avoid creating several UBXReader instances when rx_logging is triggere, not a good solution though
+
+logging.basicConfig(level=logging.INFO)
+
+state = ServerState()
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
-socketio = SocketIO(app)
+# Use threading async mode to avoid depending on eventlet/gevent here
+socketio = SocketIO(app, async_mode='threading')
 
 @app.route("/")
 def index():
@@ -26,14 +26,14 @@ def about():
 def register_client(data):
     client_id = data['clientId']
     sid = request.sid
-    print(f'cliend_id {client_id} connected with sid {sid}')
-    
-    clients[client_id] = sid
-    print(clients)
+    logging.info('client_id %s connected with sid %s', client_id, sid)
+
+    state.clients[client_id] = sid
+    logging.debug('clients: %s', state.clients)
 
 @socketio.on('disconnect')
 def unregister_client():
-    print('unregister_client')
+    logging.info('unregister_client')
     #clients.pop(data['client_id'])
     #print(clients)
 
@@ -41,95 +41,92 @@ def unregister_client():
 @socketio.on('list_serial_ports')
 def list_serial_ports():
     ports = ubxlib.list_available_serial_ports()
-    emit('available_serial_ports', ports[1])
+    if isinstance(ports, list) and len(ports) > 1:
+        emit('available_serial_ports', ports[1])
+    else:
+        emit('available_serial_ports', [])
 
 @socketio.on('auto_connect_receiver')
 def auto_connect_receiver():
-    global stream
     connection_info = ubxlib.auto_connect_receiver(socketio)
-    print(connection_info)
-    stream = connection_info[2]
+    logging.info('auto_connect_receiver: %s', connection_info)
+    if connection_info:
+        state.stream = connection_info[2]
     is_rx_connected()
 
 @socketio.on('connect_receiver')
 def connect(data):
-    global stream
     serial_port = data['data']['serial_ports']
     baudrate = data['data']['baudrate']
     connection_info = ubxlib.connect_receiver(serial_port, baudrate, socketio)
-    print(connection_info)
-    stream = connection_info[2]
+    logging.info('connect: %s', connection_info)
+    if connection_info:
+        state.stream = connection_info[2]
     is_rx_connected()
 
 @socketio.on('is_rx_connected')
 def is_rx_connected():
-    print('is_rx_connected')
-    global stream, rx_connected, is_logging
-    print(stream)
-    if stream:
-        rx_connected = True
-    else:
-        rx_connected = False
+    logging.debug('is_rx_connected')
+    logging.debug('stream: %s', state.stream)
+    state.rx_connected = bool(state.stream)
     emit('rx_connection_status', {
-                                'rx_connected': rx_connected,
-                                'stream': str(stream),
-                                'is_logging': is_logging
+                                'rx_connected': state.rx_connected,
+                                'stream': str(state.stream),
+                                'is_logging': state.is_logging
                                 })    
                                 
 @socketio.on('disconnect_rx')
 def disconnect_rx():
-    print('disconnect_rx')
-    global stream, rx_connected
+    logging.info('disconnect_rx')
     hide_rx_output()
-    print(f"Stream before closing: {stream}")
-    if stream:
-        print('Closing stream...')
-        stream.close()
-        stream = None
-        rx_connected = False
-        print(f"Stream after closing: {stream}")
-    is_rx_connected()  # Ensure rx_connection_status is emitted after disconnecting
+    logging.debug('Stream before closing: %s', state.stream)
+    if state.stream:
+        logging.info('Closing stream...')
+        try:
+            state.stream.close()
+        except Exception:
+            logging.exception('Error closing stream')
+        state.stream = None
+        state.rx_connected = False
+        logging.debug('Stream after closing: %s', state.stream)
+    is_rx_connected()
 
 @socketio.on('mon_ver')
 def mon_ver():
-    print('mon_ver')
-    global is_logging
-    if is_logging == False:
-        payload = ubxlib.poll_mon_ver(stream, socketio)
+    logging.info('mon_ver')
+    if not state.is_logging and state.stream:
+        payload = ubxlib.poll_mon_ver(state.stream, socketio)
         emit('mon-ver', {'data': payload})
 
 @socketio.on('show_rx_output')
 def show_rx_output():
-    print('show_rx_output')
-    global is_logging
-    if not is_logging:
-        is_logging = True
-        socketio.start_background_task(target=ubxlib.log_rx_output, stream=stream, socketio=socketio, is_logging=lambda: is_logging)
+    logging.info('show_rx_output')
+    if not state.is_logging and state.stream:
+        state.is_logging = True
+        # Start background task that reads from stream and emits via socketio
+        socketio.start_background_task(ubxlib.log_rx_output, state.stream, socketio, lambda: state.is_logging)
 
 @socketio.on('hide_rx_output')
 def hide_rx_output():
-    print('hide_rx_output')
-    global is_logging
-    if is_logging:
-        is_logging = False
-    is_rx_connected()  # Add this line to emit the rx_connection_status event
+    logging.info('hide_rx_output')
+    if state.is_logging:
+        state.is_logging = False
+    is_rx_connected()
 
 @socketio.on('enable_nav_pvt')
 def enable_nav_pvt():
-    global stream
-    ubxlib.enable_nav_pvt_message(stream, socketio)
-    print('enable_nav_pvt')
+    ubxlib.enable_nav_pvt_message(state.stream, socketio)
+    logging.info('enable_nav_pvt')
 
 @socketio.on('enable_useful_msgs')
 def enable_useful_msgs():
-    global stream
-    ubxlib.enable_useful_msgs(stream, socketio)
-    print('enable_useful_msgs')
+    ubxlib.enable_useful_msgs(state.stream, socketio)
+    logging.info('enable_useful_msgs')
 
 
 @socketio.on('message')
 def handle_message(data):
-    print('received message: ' + data['data'][0])
+    logging.info('received message: %s', data.get('data'))
     emit('message_response', {'data': 'Message was received by the server!'})
 
 if __name__ == '__main__':
