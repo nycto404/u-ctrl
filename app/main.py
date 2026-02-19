@@ -1,8 +1,9 @@
 from flask import Flask, render_template, jsonify, request
 from flask_socketio import SocketIO, send, emit
-import library.ubxlib as ubxlib
-from server_state import ServerState
+from app.library import ubxlib
+from app.server_state import ServerState
 import logging
+import os
 
 
 logging.basicConfig(level=logging.INFO)
@@ -11,8 +12,10 @@ state = ServerState()
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
-# Use threading async mode to avoid depending on eventlet/gevent here
-socketio = SocketIO(app, async_mode='threading')
+# Allow overriding async mode via environment variable for Docker/runtime flexibility.
+# If not set, Flask-SocketIO will choose the best available async mode (eventlet/gevent/threading).
+async_mode = os.environ.get('SOCKETIO_ASYNC_MODE', None)
+socketio = SocketIO(app, async_mode=async_mode)
 
 @app.route("/")
 def index():
