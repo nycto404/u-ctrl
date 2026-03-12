@@ -42,7 +42,10 @@
                     <li><a href="/"><i class="fa-solid fa-home"></i> Home</a></li>
                     <li><a href="/about"><i class="fa-solid fa-info"></i> About</a></li>
                 </div>
-                <div class="theme">
+                <div class="topbar-right">
+                    <span class="runtime-badge {% if running_in_docker %}runtime-docker{% else %}runtime-local{% endif %}">
+                        Runtime: {{ runtime_environment }}
+                    </span>
                     <button class="btn btn-dark" id="toggle-theme-button"><i class="fa-solid fa-sun" id="toggle-theme-button-icon"></i></button>
                 </div>
             </nav><br>

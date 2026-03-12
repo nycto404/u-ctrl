@@ -1,9 +1,16 @@
 from flask import Flask, render_template, jsonify, request
 from flask_socketio import SocketIO, send, emit
-from app.library import ubxlib
-from app.server_state import ServerState
 import logging
 import os
+
+try:
+    # Works when starting from repository root (e.g. `python -m app.main`).
+    from app.library import ubxlib
+    from app.server_state import ServerState
+except ModuleNotFoundError:
+    # Works when running as a script from within the app directory/container entrypoint.
+    from library import ubxlib
+    from server_state import ServerState
 
 
 logging.basicConfig(level=logging.INFO)
@@ -16,6 +23,28 @@ app.config['SECRET_KEY'] = 'secret!'
 # If not set, Flask-SocketIO will choose the best available async mode (eventlet/gevent/threading).
 async_mode = os.environ.get('SOCKETIO_ASYNC_MODE', None)
 socketio = SocketIO(app, async_mode=async_mode)
+
+
+def is_running_in_docker():
+    """Best-effort detection for Docker/containerized execution."""
+    if os.path.exists('/.dockerenv'):
+        return True
+    try:
+        with open('/proc/1/cgroup', 'r', encoding='utf-8') as cgroup_file:
+            cgroup = cgroup_file.read()
+        return any(marker in cgroup for marker in ('docker', 'containerd', 'kubepods'))
+    except OSError:
+        return False
+
+
+@app.context_processor
+def inject_runtime_info():
+    """Expose runtime environment label to all templates."""
+    running_in_docker = is_running_in_docker()
+    return {
+        'running_in_docker': running_in_docker,
+        'runtime_environment': 'Docker' if running_in_docker else 'Local'
+    }
 
 @app.route("/")
 def index():
@@ -133,4 +162,4 @@ def handle_message(data):
     emit('message_response', {'data': 'Message was received by the server!'})
 
 if __name__ == '__main__':
-    socketio.run(app, debug=True)
+    socketio.run(app, debug=True, host='0.0.0.0')
