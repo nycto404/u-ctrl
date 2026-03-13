@@ -9,4 +9,9 @@ services:
       - PYTHONUNBUFFERED=1
     volumes:
       - ./:/app:rw
+    devices:
+      - /dev/ttyUSB0:/dev/ttyUSB0
+      - /dev/ttyUSB1:/dev/ttyUSB1
+      - /dev/ttyUSB2:/dev/ttyUSB2
+      - /dev/ttyUSB3:/dev/ttyUSB3
     restart: unless-stopped
