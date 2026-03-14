@@ -1,119 +1,20 @@
 {% extends 'base.html' %}
 
+{% block extra_head %}
+{% if not frontend_dev_server_url %}
+<link rel="stylesheet" href="/static/dist/assets/app.css">
+{% endif %}
+{% endblock %}
+
 {% block content %}
-
-<div class="main-container">
-
-    <div class="controls">
-        <div class="buttons">
-            <button class="btn btn-primary" id="list-serial-ports-button">List Serial Ports</button>
-            <button class="btn btn-primary" id="autoconnect-button">Autoconnect</button>
-            <button class="btn btn-danger" id="disconnect-button">Disconnect</button>
-            <button class="btn btn-secondary" id="clear-log-button">Clear Log</button>
-            <button class="btn btn-primary" id="test-button">Test Button</button>
-            <button class="btn btn-primary" id="poll-mon-ver-button">MON-VER</button>
-            <button class="btn btn-primary" id="enable-nav-pvt-button">Enable NAV-PVT</button>
-            <button class="btn btn-primary" id="toggle-rx-output">Toggle RX output</button>
-            <button class="btn btn-info" id="enable-useful-msgs-button">Enable useful messages</button>
-            <button class="btn btn-info" id="">Log to file</button>
-            
-        </div>
-
-        <div class="manual-connect">
-            <select class="form-select w-100" id="serial-port-select">
-                <option selected>Serial Port</option>
-            </select>
-            <select class="form-select w-100" id="baudrate-select">
-                <option selected>Baudrate</option>
-                <option value="9600">9600</option>
-                <option value="38400">38400</option>
-                <option value="115200">115200</option>
-                <option value="460800">460800</option>
-                <option value="921600">921600</option>
-            </select>
-            <button class="btn btn-primary w-100" id="connect-button">Connect</button>
-        </div>
-
-
-        <div class="connection-status">
-            <!-- <p id="connection-status">Disconnected</p> -->
-            <i class="fa-solid fa-link"></i>
-        </div>
-        <div class="last-successful-connection-details">
-            <p id="last-successful-connection-details"></p>
-        </div>
-    </div>
-    <hr>
-    <div class="receiver-data">
-        <div class="receiver-info" id="receiver-info">
-            <h4>MON-VER</h4>
-            <table class="mon-ver-table" id="mon-ver-data">
-                <tr id="software-version">
-                    <th>Software Version</th>
-                </tr>
-                <tr id="hardware-version">
-                    <th>Hardware Version</th>
-                </tr>
-                <tr id="extensions">
-                    <th>Extensions</th>
-                </tr>
-
-            </table>
-        </div>
-
-        <div class="nav-pvt-data">
-            <h4>NAV-PVT Data</h4>
-            <table class="nav-pvt-data-table" id="nav-pvt-data-table">
-                <tr id="iTOW">
-                    <th>iTOW</th>
-                </tr>
-                <tr id="year">
-                    <th>Year</th>
-                </tr>
-                <tr id="month">
-                    <th>month</th>
-                </tr>
-                <tr id="day">
-                    <th>day</th>
-                </tr>
-                <tr id="fix_type">
-                    <th>Fix Type</th>
-                </tr>
-                <tr id="lat">
-                    <th>Latitude</th>
-                </tr>
-                <tr id="lon">
-                    <th>Longitude</th>
-                </tr>
-                <tr id="height">
-                    <th>Altitude</th>
-                </tr>
-                <tr id="speed">
-                    <th>Speed</th>
-                </tr>
-
-            </table>
-        </div>
-
-    </div>
-    <hr>
-
-    <div id="map">
-
-    </div>
-    <hr>
-
-    <div class="log-container" id="log-container">
-        <div><h4>Logs</h4></div>
-        <div class="logs" id="logs">
-
-        </div>
-    </div>
-    <hr>
-
+<div id="app-root"
+     data-runtime-environment="{{ runtime_environment }}"
+     data-running-in-docker="{{ 'true' if running_in_docker else 'false' }}">
 </div>
-
-
-<script src="/static/scripts/app.js"></script>
-<script src="static/scripts/map.js"></script>
+{% if frontend_dev_server_url %}
+<script type="module" src="{{ frontend_dev_server_url }}/@vite/client"></script>
+<script type="module" src="{{ frontend_dev_server_url }}/src/main.js"></script>
+{% else %}
+<script type="module" src="/static/dist/assets/app.js"></script>
+{% endif %}
 {% endblock %}

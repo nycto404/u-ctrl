@@ -22,7 +22,10 @@ app.config['SECRET_KEY'] = 'secret!'
 # Allow overriding async mode via environment variable for Docker/runtime flexibility.
 # If not set, Flask-SocketIO will choose the best available async mode (eventlet/gevent/threading).
 async_mode = os.environ.get('SOCKETIO_ASYNC_MODE', None)
-socketio = SocketIO(app, async_mode=async_mode)
+cors_allowed_origins = os.environ.get('SOCKETIO_CORS_ALLOWED_ORIGINS', None)
+if cors_allowed_origins and ',' in cors_allowed_origins:
+    cors_allowed_origins = [origin.strip() for origin in cors_allowed_origins.split(',') if origin.strip()]
+socketio = SocketIO(app, async_mode=async_mode, cors_allowed_origins=cors_allowed_origins)
 
 
 def is_running_in_docker():
@@ -41,9 +44,11 @@ def is_running_in_docker():
 def inject_runtime_info():
     """Expose runtime environment label to all templates."""
     running_in_docker = is_running_in_docker()
+    frontend_dev_server_url = os.environ.get('FRONTEND_DEV_SERVER_URL', '').rstrip('/')
     return {
         'running_in_docker': running_in_docker,
-        'runtime_environment': 'Docker' if running_in_docker else 'Local'
+        'runtime_environment': 'Docker' if running_in_docker else 'Local',
+        'frontend_dev_server_url': frontend_dev_server_url
     }
 
 @app.route("/")

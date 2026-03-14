@@ -4,6 +4,8 @@
     --primary-color: #6f65ff6b;
     --secondary-color: #65ffa58c;
     --log-container-color: #dadada44;
+    --panel-border: rgba(15, 23, 42, 0.1);
+    --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
 }
 
 [data-theme="dark"] {
@@ -12,6 +14,8 @@
     --primary-color: #00868683;
     --secondary-color: #46067a;
     --log-container-color: #27272742;
+    --panel-border: rgba(255, 255, 255, 0.1);
+    --shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
 }
 
 * {
@@ -26,6 +30,10 @@ html, body {
     height: auto;
     min-height: 100vh;
     font-family: "Open Sans", sans-serif;
+}
+
+[v-cloak] {
+    display: none;
 }
 
 .wrapper {
@@ -110,13 +118,24 @@ a {
     width: 90%;
     height: auto;
     margin: auto;
+    display: grid;
+    gap: 16px;
 }
 
-.controls {
+.panel {
+    background: var(--log-container-color);
+    border: 1px solid var(--panel-border);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    padding: 18px;
+}
+
+.controls-panel {
     width: 100%;
     display: grid;
-    grid-template-columns: auto auto auto;
+    grid-template-columns: 1.7fr 1fr auto;
     column-gap: 20px;
+    align-items: start;
 }
 
 .manual-connect {
@@ -149,6 +168,22 @@ a {
     transform: rotate(180deg);
 }
 
+.connection-status.connected {
+    background-color: #1adb61;
+}
+
+.connection-meta {
+    display: grid;
+    justify-items: center;
+    gap: 8px;
+}
+
+.connection-text {
+    margin: 0;
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
 .receiver-data {
     display: grid;
     grid-template-columns: 25% auto;
@@ -172,6 +207,11 @@ a {
     padding-bottom: 2px;
 }
 
+.extensions-list {
+    margin: 0;
+    padding-left: 16px;
+}
+
 tr, td {
     font-size: small;
 }
@@ -181,12 +221,36 @@ tr, td {
     border-radius: 10px;
 }
 
+.map-wrapper {
+    padding: 12px;
+}
+
 .log-container {
     height: 700px;
     width: 100%;
-    background-color: var(--log-container-color);
-    border-radius: 20px;
-    padding: 20px;
+}
+
+.log-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.status-chip {
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 4px 10px;
+}
+
+.status-on {
+    background: rgba(26, 219, 97, 0.2);
+    color: #0a7a35;
+}
+
+.status-off {
+    background: rgba(227, 16, 58, 0.2);
+    color: #a50e2f;
 }
 
 .logs {
@@ -206,5 +270,30 @@ tr, td {
 
 .title {
     text-align: center;
+}
+
+@media (max-width: 992px) {
+    .controls-panel {
+        grid-template-columns: 1fr;
+        row-gap: 14px;
+    }
+
+    .receiver-data {
+        grid-template-columns: 1fr;
+        row-gap: 12px;
+    }
+
+    .manual-connect {
+        grid-template-columns: 1fr;
+        row-gap: 8px;
+    }
+
+    #map {
+        min-height: 340px;
+    }
+
+    .log-container {
+        height: 520px;
+    }
 }
 

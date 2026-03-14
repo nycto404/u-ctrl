@@ -1,0 +1,155 @@
+.vue-shell {
+    width: 90%;
+    margin: 0 auto;
+    display: grid;
+    gap: 16px;
+}
+
+.panel {
+    background: var(--log-container-color);
+    border: 1px solid var(--panel-border);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    padding: 18px;
+}
+
+.controls-panel {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1.7fr 1fr auto;
+    column-gap: 20px;
+    align-items: start;
+}
+
+.manual-connect {
+    display: grid;
+    grid-template-columns: auto auto auto;
+    column-gap: 5px;
+}
+
+.connection-status {
+    height: auto;
+    width: 38px;
+    display: flex;
+    justify-content: center;
+    justify-self: right;
+    align-items: center;
+    background-color: #dc3545;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: transform 0.5s;
+}
+
+.connection-status:hover {
+    transform: rotate(180deg);
+}
+
+.connection-status.connected {
+    background-color: #1adb61;
+}
+
+.connection-meta {
+    display: grid;
+    justify-items: center;
+    gap: 8px;
+}
+
+.connection-text {
+    margin: 0;
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+.receiver-data {
+    display: grid;
+    grid-template-columns: 25% auto;
+    column-gap: 10px;
+    border-radius: 10px;
+}
+
+.receiver-info,
+.nav-pvt-data {
+    display: grid;
+    grid-template-columns: auto;
+    border-radius: 10px;
+    overflow-y: auto;
+    background-color: var(--log-container-color);
+    padding: 20px;
+}
+
+.extensions-list {
+    margin: 0;
+    padding-left: 16px;
+}
+
+.map-wrapper {
+    padding: 12px;
+}
+
+.map-canvas {
+    min-height: 500px;
+    border-radius: 10px;
+}
+
+.log-container {
+    height: 700px;
+    width: 100%;
+}
+
+.log-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.status-chip {
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 4px 10px;
+}
+
+.status-on {
+    background: rgba(26, 219, 97, 0.2);
+    color: #0a7a35;
+}
+
+.status-off {
+    background: rgba(227, 16, 58, 0.2);
+    color: #a50e2f;
+}
+
+.logs {
+    overflow-y: auto;
+    height: 600px;
+}
+
+.log-container p {
+    margin-bottom: 1px;
+    font-size: small;
+}
+
+@media (max-width: 992px) {
+    .controls-panel {
+        grid-template-columns: 1fr;
+        row-gap: 14px;
+    }
+
+    .receiver-data {
+        grid-template-columns: 1fr;
+        row-gap: 12px;
+    }
+
+    .manual-connect {
+        grid-template-columns: 1fr;
+        row-gap: 8px;
+    }
+
+    .map-canvas {
+        min-height: 340px;
+    }
+
+    .log-container {
+        height: 520px;
+    }
+}
